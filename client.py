@@ -169,9 +169,9 @@ class Object:
     image_menu_title = pygame.image.load("menu_title.png").convert_alpha()
     font_super_text = pygame.font.Font("Visitor Rus.ttf", 50)
     def __init__(self, image, x, y):
-        self.image = image
-        self.rect = self.image.get_rect(center=(x, y))
         self.position = Vector2(x, y)
+        self.image = image
+        self.rect = self.image.get_rect(center=self.position)
     def draw(self):
         game_renderer.screen.blit(self.image, self.position)
     def update(self):
@@ -222,11 +222,11 @@ class MenuTitle(Object):
 
 class HubOnlineViewer(Object):
     def __init__(self, x, y):
+        self.position = Vector2(x, y)
         self.image = Object.font_super_text
         self.online = 0
         self.text = self.image.render(f"Hub ONLINE: {self.online} / 2", False, (255, 255, 255))
-        self.rect = self.text.get_rect(center=(x, y))
-        self.position = Vector2(x, y)
+        self.rect = self.text.get_rect(center=self.position)
         self.start_time = time.time()
     def draw(self):
         game_renderer.screen.blit(self.text, self.position)
@@ -284,9 +284,15 @@ def main():
     game_renderer.add_scene(hub)
     game_renderer.add_scene(game)
     print("workers starting...")
-    threading.Thread(target=data_handler).start()
-    threading.Thread(target=response_handler).start()
-    threading.Thread(target=request_handler).start()
+    threads0 = []
+    thread0 = threading.Thread(target=data_handler)
+    thread1 = threading.Thread(target=response_handler)
+    thread2 = threading.Thread(target=request_handler)
+    threads0.append(thread0)
+    threads0.append(thread1)
+    threads0.append(thread2)
+    for thread in threads0:
+        thread.start()
     print("\nall workers started!")
     request = create_request("connect")
     request_sender(request)
