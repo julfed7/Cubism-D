@@ -75,7 +75,7 @@ class Window:
 
 environtment_os = "android"
 			
-config = read_file_json("settings\app.json")
+config = read_file_json("settings/app.json")
 
 TITLE = config["Title"]
 
