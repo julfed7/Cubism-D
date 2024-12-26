@@ -1,7 +1,7 @@
 {
 	"Title": "Cubism D",
 	"FPS": 60,
-	"Width": 1,
-	"Height": 1,
+	"Width": 600,
+	"Height": 600,
 	"Icon_file_name": "icon.png"
 }
