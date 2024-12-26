@@ -29,18 +29,6 @@ def read_file(path):
 	file_type = file_name.split(".")[-1]
 	if file_type == "json":
 		return read_file_json(path)
-
-def create_window(width, height):
-	pygame.display.set_mode((width, height))
-	screen = pygame.display.get_surface()
-	return screen
-	
-def rename_window(title):
-	pygame.display.set_caption(title)
-
-def reset_window_icon(image):
-	pygame.display.set_icon(image)
-
 class Image:
 	def __init__(self, path):
 		self.path = path
@@ -51,6 +39,8 @@ class Image:
 		return self.path
 	def set_surface(self, new_surface):
 		self.surface = new_surface
+	def get_surface(self):
+		return self.surface
 
 class Window:
 	def __init__(self, width, height):
@@ -65,7 +55,7 @@ class Window:
 	def update(self):
 		pygame.display.set_mode((self.get_width(), self.get_height()))
 		pygame.display.set_caption(self.get_title())
-		pygame.display.set_icon(self.get_icon_image)
+		pygame.display.set_icon(self.get_icon_image().get_surface())
 	def set_surface(self, new_surface):
 		self.surface = new_surface
 	def get_surface(self):
@@ -75,7 +65,7 @@ class Window:
 	def get_height(self):
 		return self.height
 	def set_title(self, new_title):
-		self.title = title
+		self.title = new_title
 	def get_title(self):
 		return self.title
 	def set_icon_image(self, new_image):
@@ -101,14 +91,19 @@ is_running = True
 
 pygame.init()
 
-screen = create_window(WIDTH, HEIGHT)
+window = Window(WIDTH, HEIGHT)
+window.setup()
 
-rename_window(TITLE)
+screen = window.get_surface()
+
+window.set_title(TITLE)
 
 icon_image = Image(path("sprites/icon.png"))
 icon_image.setup()
 
-reset_window_icon(TITLE)
+window.set_icon_image(icon_image)
+
+window.update()
 
 while is_running:
 	for event in pygame.event.get():
