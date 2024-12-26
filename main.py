@@ -61,7 +61,7 @@ class Window:
 		self.icon_image = None
 	def setup(self):
 		pygame.display.set_mode((self.get_width(), self.get_height()))
-		seld.set_surface(pygame.display.get_surface())
+		self.set_surface(pygame.display.get_surface())
 	def update(self):
 		pygame.display.set_mode((self.get_width(), self.get_heigt()))
 		pygame.display.set_caption(self.get_title())
