@@ -50,7 +50,7 @@ class Window:
     def __init__(self, width, height):
         self.width = width
         self.height = height
-        self.title = "game window"
+        self.title = "pygame window"
         self.surface = None
         self.icon_image = None
         self.virtual_surface = None
