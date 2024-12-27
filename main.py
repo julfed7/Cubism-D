@@ -30,6 +30,9 @@ def read_file(path):
     if file_type == "json":
         return read_file_json(path)
 
+def get_events():
+    return [Event(event.type, event.key if hasattr(event, "key") else None) for event in pygame.event.get()]
+
 class Image:
     def __init__(self, path):
         self.path = path
@@ -47,7 +50,7 @@ class Window:
     def __init__(self, width, height):
         self.width = width
         self.height = height
-        self.title = "default"
+        self.title = "game window"
         self.surface = None
         self.icon_image = None
         self.virtual_surface = None
@@ -62,9 +65,14 @@ class Window:
     def draw(self, image, position):
         self.get_virtual_surface().blit(image.get_surface(), (position[0], position[1]))
     def tick(self):
-        scaled_virtual_surface = pygame.transform.scale(self.get_virtual_surface(), pygame.display.get_surface().get_size())
-        self.get_surface().blit(scaled_virtual_surface, (0, 0))
+        window_size = self.get_surface().get_size()
+        size = (window_size[1]/9*16, window_size[1])
+        position = (window_size[0]/2-size[0]/2, window_size[1]/2-size[1]/2)
+        scaled_virtual_surface = pygame.transform.scale(self.get_virtual_surface(), size)
+        self.get_surface().blit(scaled_virtual_surface, position)
         pygame.display.flip()
+    def fill(self, color):
+        self.get_virtual_surface().fill(color)
     def set_surface(self, new_surface):
         self.surface = new_surface
     def get_surface(self):
@@ -86,6 +94,25 @@ class Window:
     def get_virtual_surface(self):
         return self.virtual_surface
 
+class Event:
+    def __init__(self, type, key):
+        self.type = type
+        self.key = key
+    def set_type(self, new_type):
+        self.type = new_type
+    def get_type(self):
+        return self.type
+    def set_key(self, new_key):
+        self.key = new_key
+    def get_key(self):
+        return self.key
+
+ticks = 0
+
+delta_time = 0
+
+is_running = True
+
 environtment_os = "android"		
         
 config = read_file(path("settings/app.json"))
@@ -99,8 +126,6 @@ WIDTH = config["Width"]
 HEIGHT = config["Height"]
 
 icon_file_name = config["Icon_file_name"]
-
-is_running = True
 
 pygame.init()
 
@@ -121,11 +146,14 @@ window.update()
 print(pygame.display.Info())
 
 while is_running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
+    for event in get_events():
+        if event.get_type() == pygame.QUIT:
             is_running = False
-        elif event.type == pygame.KEYUP:
-            if event.key == pygame.K_ESCAPE:
+        elif event.get_type() == pygame.KEYUP:
+            if event.get_key() == pygame.K_ESCAPE:
                 is_running = False
-    window.tick()			
+    window.fill((255, 255, 255))
+    window.tick()
+    ticks += 1
+    
 pygame.quit()
