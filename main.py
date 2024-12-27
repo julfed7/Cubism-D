@@ -109,7 +109,7 @@ class Event:
 
 ticks = 0
 
-delta_time = 0
+delta_time = time.time()/1000
 
 is_running = True
 
@@ -155,5 +155,6 @@ while is_running:
     window.fill((255, 255, 255))
     window.tick()
     ticks += 1
-    
+    delta_time = time.time()/1000-delta_time
+    print(delta_time)
 pygame.quit()
