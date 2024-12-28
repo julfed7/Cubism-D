@@ -3,6 +3,7 @@ import sys
 import json
 import pygame
 import time
+import logic
 
 def resource_path(relative):
     if hasattr(sys, "_MEIPASS"):
@@ -34,78 +35,53 @@ def get_events():
     return [Event(event.type, event.key if hasattr(event, "key") else None) for event in pygame.event.get()]
 
 class Image:
-    def __init__(self, path):
-        self.path = path
+    def __init__(self):
         self.surface = None
-    def setup(self):
-        self.set_surface(pygame.image.load(path(self.get_path())))
-    def get_path(self):
-        return self.path
-    def set_surface(self, new_surface):
-        self.surface = new_surface
-    def get_surface(self):
-        return self.surface
 
 class Window:
     def __init__(self, width, height):
-        self.width = width
-        self.height = height
-        self.title = "pygame window"
-        self.surface = None
+        self.__width = width
+        self.__height = height
+        self.__virtual_surface = None
         self.icon_image = None
-        self.virtual_surface = None
+        self.surface = None
+        self.title = "pygame window"
     def setup(self):
         pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-        self.set_surface(pygame.display.get_surface())
-        self.set_virtual_surface(pygame.Surface((self.get_width(), self.get_height())))
+        self.surface = pygame.display.get_surface()
+        self.virtual_surface = pygame.Surface((self.width, self.height))
     def update(self):
         pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-        pygame.display.set_caption(self.get_title())
-        pygame.display.set_icon(self.get_icon_image().get_surface())
+        pygame.display.set_caption(self.title)
+        pygame.display.set_icon(self.icon_image.surface)
     def draw(self, image, position):
-        self.get_virtual_surface().blit(image.get_surface(), (position[0], position[1]))
+        self.virtual_surface.blit(image.surface, (position[0], position[1]))
     def tick(self):
-        window_size = self.get_surface().get_size()
+        window_size = self.surface.get_size()
         size = (window_size[1]/9*16, window_size[1])
         position = (window_size[0]/2-size[0]/2, window_size[1]/2-size[1]/2)
-        scaled_virtual_surface = pygame.transform.scale(self.get_virtual_surface(), size)
-        self.get_surface().blit(scaled_virtual_surface, position)
+        scaled_virtual_surface = pygame.transform.scale(self.virtual_surface, size)
+        self.surface.blit(scaled_virtual_surface, position)
         pygame.display.flip()
     def fill(self, color):
-        self.get_virtual_surface().fill(color)
-    def set_surface(self, new_surface):
-        self.surface = new_surface
-    def get_surface(self):
-        return self.surface
-    def get_width(self):
-        return self.width
-    def get_height(self):
-        return self.height
-    def set_title(self, new_title):
-        self.title = new_title
-    def get_title(self):
-        return self.title
-    def set_icon_image(self, new_image):
-        self.icon_image = new_image
-    def get_icon_image(self):
-        return self.icon_image
-    def set_virtual_surface(self, new_surface):
-        self.virtual_surface = new_surface
-    def get_virtual_surface(self):
-        return self.virtual_surface
+        self.virtual_surface.fill(color)
+    @property
+    def width(self):
+        return self.__width
+    @property
+    def height(self):
+        return self.__height
+    @property
+    def virtual_surface(self):
+        return self.__virtual_surface
+    @virtual_surface.setter
+    def virtual_surface(self, new_surface):
+        self.__virtual_surface = new_surface
 
 class Event:
     def __init__(self, type, key):
         self.type = type
         self.key = key
-    def set_type(self, new_type):
-        self.type = new_type
-    def get_type(self):
-        return self.type
-    def set_key(self, new_key):
-        self.key = new_key
-    def get_key(self):
-        return self.key
 
 ticks = 0
 
@@ -128,19 +104,27 @@ HEIGHT = config["Height"]
 
 icon_file_name = config["Icon_file_name"]
 
+game = logic.Game()
+
+scene = logic.Scene()
+
+game_object = logic.GameObject()
+
+scene.add_game_object(game_object)
+
 pygame.init()
 
 window = Window(WIDTH, HEIGHT)
 window.setup()
 
-screen = window.get_surface()
+screen = window.surface
 
-window.set_title(TITLE)
+window.title = TITLE
 
-icon_image = Image(path("sprites/icon.png"))
-icon_image.setup()
+icon_image = Image()
+icon_image.surface = pygame.image.load("sprites/icon.png")
 
-window.set_icon_image(icon_image)
+window.icon_image = icon_image
 
 window.update()
 
@@ -148,10 +132,10 @@ print(pygame.display.Info())
 
 while is_running:
     for event in get_events():
-        if event.get_type() == pygame.QUIT:
+        if event.type == pygame.QUIT:
             is_running = False
-        elif event.get_type() == pygame.KEYUP:
-            if event.get_key() == pygame.K_ESCAPE:
+        elif event.type == pygame.KEYUP:
+            if event.key == pygame.K_ESCAPE:
                 is_running = False
     window.fill((255, 255, 255))
     window.tick()
