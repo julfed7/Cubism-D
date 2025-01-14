@@ -1,0 +1,10 @@
+{
+  "World": {
+    "Game_objects": {
+      "Block": {
+        "Type": "Grass",
+        "Position": [0, 0]
+      }
+    }
+  }
+}
