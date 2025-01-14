@@ -66,7 +66,7 @@ for scene_name in scenes:
                 removing_arguments_name.append(argument_name)
 
         for removing_argument_name in removing_arguments_name:
-            arguments.pop(removing_bargument_name)
+            arguments.pop(removing_argument_name)
 
         if game_object_parameters["Type"] == "Grass":
             game_object = logic.Grass(game_object_name, **arguments)
@@ -87,6 +87,10 @@ while is_running:
                 is_running = False
     #Draw
     virtual_screen.fill((255, 255, 255))
+    
+    surface = pygame.Surface((50, 50))
+    surface.fill("yellow")
+    virtual_screen.blit(surface, (1316, 0))
 
     for game_object in current_scene.game_objects:
         virtual_screen.blit(sprites[type(game_object)], (game_object.position[0], game_object.position[1]))
@@ -97,9 +101,9 @@ while is_running:
     
     size = (screen_size[0]/PROPORTION_X*PROPORTION_Y, screen_size[1])
     
-    virtual_screen = pygame.transform.scale(virtual_screen, size)
+    changed_virtual_screen = pygame.transform.scale(virtual_screen, size)
     
-    screen.blit(virtual_screen, (screen_size[0]/2-size[0]/2, screen_size[1]/2-size[1]/2))
+    screen.blit(changed_virtual_screen, (screen_size[0]/2-size[0]/2, screen_size[1]/2-size[1]/2))
     
     pygame.display.flip()
 
