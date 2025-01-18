@@ -107,8 +107,7 @@ while is_running:
     if screen_size[0] > screen_size[1]:
     	screen_orientation = "Landscape"
     else:
-    	screen_orientation = "Portret"
-    	
+    	screen_orientation = "Portret 	
     
     if screen_orientation != last_screen_orientation:
     	screen.fill((0, 0, 0))
