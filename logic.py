@@ -29,6 +29,13 @@ class Scene:
 
 
 class Grass:
-    def __init__(self, name, position):
+    sprite = None
+    def __init__(self, screen, name, position):
+        self.__screen = screen
         self.name = name
         self.position = position
+    def render(self):
+    	self.screen.blit(Grass.sprite, (self.position[0], self.position[1]))
+    @property
+    def screen(self):
+    	return self.__screen
