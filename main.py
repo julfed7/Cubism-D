@@ -39,7 +39,11 @@ pygame.display.set_caption(TITLE)
 pygame.display.set_icon(icon_image)
 
 
-logic.Grass.sprite = pygame.image.load(utils.path("sprites/grass.png"))
+game_object_types = {
+	"Grass": logic.Grass
+}
+
+logic.Grass.image = pygame.image.load(utils.path("sprites/grass.png"))
 
 screen_size = screen.get_size()
 
@@ -56,8 +60,6 @@ for scene_name in scenes:
         game_object_parameters = scene_parameters["Game_objects"][game_object_name]
         
         arguments = {game_object_parameter_name.lower():game_object_parameter_value for game_object_parameter_name, game_object_parameter_value in game_object_parameters.items()}
-        
-        marks = []
 
         removing_arguments_name = []
         
@@ -68,37 +70,20 @@ for scene_name in scenes:
                 removing_arguments_name.append(argument_name)
             elif argument_name == "position":
             	changing_arguments_name.append(argument_name)
-            elif argument_name == "is_over_screen":
-            	removing_arguments_name.append(argument_name)
-            	
-            	if arguments[argument_name] == True:
-            		changing_arguments_name.append("position")
-       
-            		marks.append("is_over_screen")
         	       		      
         for removing_argument_name in removing_arguments_name:
             arguments.pop(removing_argument_name)
                     
         for changing_argument_name in changing_arguments_name:
         	if changing_argument_name == "position":
-        		if "is_over_screen" not in marks:
-        			position = [arguments[changing_argument_name][0]*WIDTH, arguments[changing_argument_name][1]*HEIGHT]
-        		else:
-        			position = [arguments[changing_argument_name][0]*screen_size[0], arguments[changing_argument_name][1]*screen_size[1]]
+        		position = [arguments[changing_argument_name][0]*WIDTH, arguments[changing_argument_name][1]*HEIGHT]
         		arguments[changing_argument_name] = position
-        			
-        if "is_over_screen" not in marks:
-        	screen_ = virtual_screen
-        else:
-        	screen_ = screen
-
-        if game_object_parameters["Type"] == "Grass":      	
-            game_object = logic.Grass(screen_, game_object_name, **arguments)
-            
-        for mark in marks:
-        	setattr(game_object, mark, None)
         
-        new_scene.game_objects.append(game_object)
+        game_object = game_object_types[game_object_parameters["Type"]](game_object_name, **arguments)
+        
+        game_object.setup()
+        
+        new_scene.add_game_object(game_object)
  
     game.add_scene(new_scene)
 
@@ -113,16 +98,13 @@ while is_running:
             if event.key == pygame.K_ESCAPE:
                 is_running = False
                 
-    #Before screen draw
+    #Draw
     virtual_screen.fill((255, 255, 255))
     
-    post_screen_draw_game_objects = []
+    current_scene.game_objects.draw(virtual_screen)
     
-    for game_object in current_scene.game_objects:
-        if not hasattr(game_object, "is_over_screen"):
-        	game_object.render()
-        else:
-        	post_screen_draw_game_objects.append(game_object)
+    #Update
+    current_scene.tick()
     
     #Window
     screen_size = screen.get_size()
@@ -132,7 +114,7 @@ while is_running:
     if screen_size[0] > screen_size[1]:
     	screen_orientation = "Landscape"
     else:
-    	screen_orientation = "Portret"	
+    	screen_orientation = "Portret"
     
     if screen_orientation != last_screen_orientation:
     	screen.fill((0, 0, 0))
@@ -145,10 +127,6 @@ while is_running:
     changed_virtual_screen = pygame.transform.scale(virtual_screen, size)
     
     screen.blit(changed_virtual_screen, (screen_size[0]/2-size[0]/2, screen_size[1]/2-size[1]/2))
-    
-    #Post screen draw
-    for post_screen_draw_game_object in post_screen_draw_game_objects:    	
-    	post_screen_draw_game_object.render()
     	
     pygame.display.flip()
 
