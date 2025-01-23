@@ -40,10 +40,14 @@ pygame.display.set_icon(icon_image)
 
 
 game_object_types = {
-	"Grass": logic.Grass
+	"Grass": logic.Grass,
+	"PeaShooter": logic.PeaShooter
 }
 
 logic.Grass.image = pygame.image.load(utils.path("sprites/grass.png"))
+
+for i in range(1, 17):
+	logic.PeaShooter.animation_frame_images.append(pygame.image.load(utils.path("sprites/peashooter" + str(i) + ".png")))
 
 screen_size = screen.get_size()
 
