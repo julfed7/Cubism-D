@@ -1,0 +1,15 @@
+{
+  "PeaShooter": {
+    "Type": "Entity",
+    "Animation_name": "PeaShooter"
+  }
+  "World": {
+    "Type": "Scene",
+    "Game_objects": {
+      "PeaShooter": {
+        "Type": "PeaShooter",
+        "Position": [0, 0]
+      }
+    }
+  }
+}
