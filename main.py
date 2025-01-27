@@ -3,6 +3,9 @@ import utils
 import logic
 import pygame
 
+
+ENVIRONMENT_OS = "Android"
+
 ticks = 0
 
 last_time = time.time()
@@ -12,10 +15,8 @@ last_screen_orientation = "Landscape"
 screen_orientation = "Landscape"
 
 is_running = True
-
-ENVIRONMENT_OS = "Android"		
         
-config = utils.read_file(utils.path("settings/app.json"))
+config = utils.read_file(utils.path("settings/app.json", ENVIRONMENT_OS))
 
 TITLE = config["Title"]
 
@@ -32,28 +33,44 @@ screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
 
 virtual_screen = pygame.Surface((WIDTH, HEIGHT))
 
-icon_image = pygame.image.load(utils.path("sprites/"+ICON_FILE_NAME))
+icon_image = pygame.image.load(utils.path("sprites/"+ICON_FILE_NAME, ENVIRONMENT_OS))
 
 pygame.display.set_caption(TITLE)
 
 pygame.display.set_icon(icon_image)
 
 
+def detect_category(game_object):
+	if isinstance(game_object, pygame.sprite.Sprite):
+		category = "Game Objects Normal Render"
+	elif hasattr(game_object, "render"):
+		category = "Game Objects Not Normal Render"
+	else:
+		category = "Abstract Game Objects"
+		
+	return category
+
+
 game_object_types = {
 	"Grass": logic.Grass,
-	"PeaShooter": logic.PeaShooter
+	"PeaShooter": logic.PeaShooter,
+	"Camera": logic.Camera
 }
 
-logic.Grass.image = pygame.image.load(utils.path("sprites/grass.png"))
+logic.Grass.image = pygame.image.load(utils.path("sprites/grass.png", ENVIRONMENT_OS))
 
 for i in range(1, 17):
-	logic.PeaShooter.animation_frame_images.append(pygame.image.load(utils.path("sprites/peashooter" + str(i) + ".png")))
+	logic.PeaShooter.animation_frame_images.append(pygame.image.load(utils.path("sprites/peashooter" + str(i) + ".png", ENVIRONMENT_OS)))
+	
+animations = utils.read_file(utils.path("settings/animations.json", ENVIRONMENT_OS))
+
+logic.PeaShooter.animation_ticks = animations["8 FPS"]
 
 screen_size = screen.get_size()
 
 game = logic.Game()
 
-scenes = utils.read_file(utils.path("settings/scenes.json"))
+scenes = utils.read_file(utils.path("settings/scenes.json", ENVIRONMENT_OS))
 
 for scene_name in scenes:
     scene_parameters = scenes[scene_name]
@@ -87,7 +104,13 @@ for scene_name in scenes:
         
         game_object.setup()
         
-        new_scene.add_game_object(game_object)
+        if isinstance(game_object, logic.Camera):
+        	logic.PeaShooter.camera = game_object
+        	logic.Grass.camera = game_object
+        
+        category = detect_category(game_object)
+        
+        new_scene.add_game_object(game_object, category)
  
     game.add_scene(new_scene)
 
@@ -105,7 +128,10 @@ while is_running:
     #Draw
     virtual_screen.fill((255, 255, 255))
     
-    current_scene.game_objects.draw(virtual_screen)
+    current_scene.game_objects["Game Objects Normal Render"].draw(virtual_screen)
+    
+    for game_object in current_scene.game_objects["Game Objects Not Normal Render"]:
+    	game_object.render()
     
     #Update
     current_scene.tick()
