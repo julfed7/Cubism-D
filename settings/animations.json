@@ -1,8 +1,16 @@
 {
-  "PeaShooter": {
-    "Default": {
-      "Frames": 16,
-      "Ticks": [3, 4, 4, 4, 4, 3, 4, 4, 4, 4, 3, 4, 4, 4, 4, 3]
+  "Animations": {
+    "PeaShooter": {
+      "Default": {
+        "Frames": 16,
+        "Ticks": [3, 4, 4, 4, 4, 3, 4, 4, 4, 4, 3, 4, 4, 4, 4, 3]
+      },
+    },
+    "Grass": {
+      "Default": {
+        "Frames": 1,
+        "Ticks": [60]
+      }
     }
   }
 }
