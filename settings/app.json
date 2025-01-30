@@ -1,7 +1,14 @@
 {
-	"Title": "Cubism D",
-	"FPS": 60,
-	"Width": 1366,
-	"Height": 768,
-	"Icon_file_name": "icon.png"
+  "App": {
+    "Title": "Cubism D",
+    "FPS": 60,
+    "Width": 1366,
+    "Height": 768,
+    "Path_to_folder_where_images": "sprites",
+    "Path_to_folder_where_sounds": "sounds",
+    "Icon_file_name": "icon.png",
+    "Config_animations_file_name": "animations.json",
+    "Config_register_game_objects_file_name": "register_game_objects.json",
+    "Config_setup_name": "setup.json"
+  }
 }
