@@ -1,0 +1,15 @@
+{
+  "Register_objects": {
+    "PeaShooter": {
+      "Type": "Entity",
+      "Animation_name": "PeaShooter"
+    },
+    "Grass": {
+      "Type": "Wall",
+      "Animation_name": "Grass"
+    },
+    "World": {
+      "Type": "Scene"
+    }
+  }
+}
