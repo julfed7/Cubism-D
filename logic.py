@@ -1,3 +1,4 @@
+import utils
 import pygame
 
 
@@ -29,45 +30,21 @@ class Game:
 
 
 class Scene:
-    def __init__(self, name):
-        self.name = name
+    def __init__(self, type):
+        self.type = type
         
-        self.game_objects = {
-        	"Abstract Game Objects": [],
-        	"Game Objects Normal Render": pygame.sprite.Group(),
-        	"Game Objects Not Normal Render": []
-        }
+        self.name = None
         
-    def add_game_object(self, new_game_object, category):
-    	if category == "Abstract Game Objects":
-    		self.game_objects["Abstract Game Objects"].append(new_game_object)
-    	elif category == "Game Objects Normal Render":
-    		self.game_objects["Game Objects Normal Render"].add(new_game_object)
-    	elif category == "Game Objects Not Normal Render":
-    		self.game_objects["Game Objects Not Normal Render"].append(new_game_object)
+        self.game_objects = pygame.sprite.Group()
+        
+    def add_game_object(self, new_game_object):
+    	self.game_objects.add(new_game_object)
     	
     def remove_game_object(self, old_game_object):
-    	abstract_game_objects_count = len(self.game_objects["Abstract Game Objects"])
-    	
-    	game_objects_normal_render_count = len(self.game_objects["Game Objects Normal Render"])
-    	
-    	game_objects_not_normal_render_count = len(self.game_objects["Game Objects Not Normal Render"])
-    	
-    	old_game_object_index = index(list(self.game_objects.values()))
-    	
-    	if old_game_object_index <= abstract_game_objects_count:
-    		self.game_objects["Abstract Game Objects"].remove(old_game_object)
-    	elif old_game_object_index <= game_objects_normal_render_count:
-    		self.game_objects["Game Objects Normal Render"].remove(old_game_object)
-    	elif old_game_object_index <= game_objects_not_normal_render_count:
-    		self.game_objects["Game Object Not Normal Render"].remove(old_game_object)
+    	seld.game_objects.remove(old_game_object)
     	
     def tick(self):
-        self.game_objects["Game Objects Normal Render"].update()
-        for game_object in self.game_objects["Game Objects Not Normal Render"]:
-        	game_object.update()
-        for game_object in self.game_objects["Abstract Game Objects"]:
-        	game_object.update()
+        game_objects.update()
 
 
 class Grass(pygame.sprite.Sprite):
@@ -207,34 +184,58 @@ class Entity(pygame.sprite.Sprite):
 class Wall(pygame.sprite.Sprite):
 	camera = None
 	
-	def __init__(self, name, animation_name, position):
-		sslf.name = name
+	def __init__(self, type, animation_name):
+		self.type = type
 		
 		self.animation_name = animation_name
 		
-		self.position = position
+		self.name = None
+		
+		self.position = None
 		
 		self.ticks = 0
 		
 		self.last_frame_flip_ticks = self.ticks
 		
-		self.animation_ticks = None
+		self.animation_ticks = {}
+		
+		self.animation_current_frame = 0
+		
+		self.state = "Default"
+		
+		self.animation_frame_images = {}
 	
 	def update(self):
 		self.rect.x = self.position[0] - Wall.camera.position[0]
 		self.rect.y = self.position[1] - Wall.camera.position[1]
 		
-		if self.ticks-self.last_frame_flip_ticks == PeaShooter.animation_ticks[self.animation_current_frame]-1:
-						if self.animation_current_frame + 1 > len(PeaShooter.animation_frame_images) - 1:
-							self.animation_current_frame = 0
-						else:
-							self.animation_current_frame += 1
-					
-					self.last_frame_flip_ticks = self.ticks
+		if self.ticks-self.last_frame_flip_ticks == self.animation_ticks[self.state][self.animation_current_frame]-1:
+			if self.animation_current_frame + 1 > len(self.animation_frame_images) - 1:
+				self.animation_current_frame = 0
+			else:
+					self.animation_current_frame
+			
+			self.last_frame_flip_ticks = self.ticks
 				
-				self.image = PeaShooter.animation_frame_images[self.animation_current_frame]
+		self.image = self.animation_frame_images[self.state][self.animation_current_frame]
 				
-				self.ticks += 1
+		self.ticks += 1
 	
 	def setup(self):
-		pass
+		config = type(self).config
+		
+		animation_info = type(self).config_animations["Animations"][self.animation_name]
+		
+		sprites_folder_path = config["Path_to_folder_where_images"]
+		
+		for animation_state in animation_info:
+			self.animation_ticks.update({animation_state:animation_info[animation_state]["Ticks"]})
+			
+			self.animation_frame_images.update({animation_state:[]})
+			
+			for frame_number in range(1, animation_info[animation_state]["Frames"]+1):
+				frame_path = sprites_folder_path+self.animation_name.lower()+"_"+animation_state.lower()+str(frame_number)
+				
+				frame_image = pygame.image.load(utils.path(frame_path))
+				
+				self.animation_frame_images[animation_state].append(frame_image)
