@@ -2,9 +2,37 @@ import time
 import utils
 import logic
 import pygame
+import copy
 
 
 ENVIRONMENT_OS = "Android"
+
+PATH_TO_FOLDER_WHERE_SETTINGS = "settings"
+
+CONFIG_APP_FILE_NAME = "app.json"
+
+PATH_TO_FOLDER_WHERE_IMAGES = "sprites"
+
+PATH_TO_FOLDER_WHERE_SOUNDS = "sounds"
+
+ICON_FILE_NAME = "icon.png"
+
+CONFIG_ANIMATIONS_FILE_NAME = "animations.json"
+
+CONFIG_REGISTER_OBJECTS_FILE_NAME = "register_objects.json"
+
+CONFIG_SETUP_FILE_NAME = "setup.json"
+      
+config = utils.read_file(utils.path(PATH_TO_FOLDER_WHERE_SETTINGS+"/"+CONFIG_APP_FILE_NAME, ENVIRONMENT_OS))
+
+TITLE = config["App"]["Title"]
+
+FPS = config["App"]["FPS"]
+
+WIDTH = config["App"]["Width"]
+
+HEIGHT = config["App"]["Height"]
+
 
 ticks = 0
 
@@ -15,18 +43,6 @@ last_screen_orientation = "Landscape"
 screen_orientation = "Landscape"
 
 is_running = True
-        
-config = utils.read_file(utils.path("settings/app.json", ENVIRONMENT_OS))
-
-TITLE = config["Title"]
-
-FPS = config["FPS"]
-
-WIDTH = config["Width"]
-
-HEIGHT = config["Height"]
-
-ICON_FILE_NAME = config["Icon_file_name"]
 
 
 screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
@@ -40,79 +56,71 @@ pygame.display.set_caption(TITLE)
 pygame.display.set_icon(icon_image)
 
 
-def detect_category(game_object):
-	if isinstance(game_object, pygame.sprite.Sprite):
-		category = "Game Objects Normal Render"
-	elif hasattr(game_object, "render"):
-		category = "Game Objects Not Normal Render"
-	else:
-		category = "Abstract Game Objects"
-		
-	return category
+config_animations = utils.read_file(utils.path(PATH_TO_FOLDER_WHERE_SETTINGS+"/"+CONFIG_ANIMATIONS_FILE_NAME, ENVIRONMENT_OS))
 
-
-game_object_types = {
-	"Grass": logic.Grass,
-	"PeaShooter": logic.PeaShooter,
-	"Camera": logic.Camera
-}
-
-logic.Grass.image = pygame.image.load(utils.path("sprites/grass.png", ENVIRONMENT_OS))
-
-for i in range(1, 17):
-	logic.PeaShooter.animation_frame_images.append(pygame.image.load(utils.path("sprites/peashooter" + str(i) + ".png", ENVIRONMENT_OS)))
-	
-animations = utils.read_file(utils.path("settings/animations.json", ENVIRONMENT_OS))
-
-logic.PeaShooter.animation_ticks = animations["8 FPS"]
+logic.Entity.set_attr("config", config)
+logic.Entity.set_attr("config_animations", config_animations)
+logic.Wall.set_attr("config_animations", config_animations)
+logic.Wall.set_attr("config", config)
 
 screen_size = screen.get_size()
 
 game = logic.Game()
 
-scenes = utils.read_file(utils.path("settings/scenes.json", ENVIRONMENT_OS))
+register_objects_info = utils.read_file(utils.path(PATH_TO_FOLDER_WHERE_SETTINGS+"/"+CONFIG_REGISTER_OBJECTS_FILE_NAME, ENVIRONMENT_OS))
 
-for scene_name in scenes:
-    scene_parameters = scenes[scene_name]
-    
-    new_scene = logic.Scene(scene_name)
-    
-    for game_object_name in scene_parameters["Game_objects"]:
-        game_object_parameters = scene_parameters["Game_objects"][game_object_name]
-        
-        arguments = {game_object_parameter_name.lower():game_object_parameter_value for game_object_parameter_name, game_object_parameter_value in game_object_parameters.items()}
+setup_info = utils.read_file(utils.path(PATH_TO_FOLDER_WHERE_SETTINGS+"/"+CONFIG_SETUP_FILE_NAME, ENVIRONMENT_OS))
 
-        removing_arguments_name = []
-        
-        changing_arguments_name = []
-        
-        for argument_name in arguments:
-            if argument_name == "type":
-                removing_arguments_name.append(argument_name)
-            elif argument_name == "position":
-            	changing_arguments_name.append(argument_name)
-        	       		      
-        for removing_argument_name in removing_arguments_name:
-            arguments.pop(removing_argument_name)
-                    
-        for changing_argument_name in changing_arguments_name:
-        	if changing_argument_name == "position":
-        		position = [arguments[changing_argument_name][0]*WIDTH, arguments[changing_argument_name][1]*HEIGHT]
-        		arguments[changing_argument_name] = position
-        
-        game_object = game_object_types[game_object_parameters["Type"]](game_object_name, **arguments)
-        
-        game_object.setup()
-        
-        if isinstance(game_object, logic.Camera):
-        	logic.PeaShooter.camera = game_object
-        	logic.Grass.camera = game_object
-        
-        category = detect_category(game_object)
-        
-        new_scene.add_game_object(game_object, category)
- 
-    game.add_scene(new_scene)
+object_types = {
+  "Scene": logic.Scene,
+  "Entity": logic.Entity,
+  "Wall": logic.Wall
+}
+
+game_object_types = {}
+
+for registered_object_name in register_objects_info["Register_objects"]:
+	type = register_objects_info["Register_objects"][registered_object_name]["Type"]
+	
+	parameters = list(register_objects_info["Register_objects"][registered_object_name].values())
+	
+	game_object_type = object_types[type](*parameters)
+	
+	game_object_types.update({registered_object_name:game_object_type})
+
+registered_game_objects = []
+
+for registered_game_object_name in setup_info["Setup"]:
+	type = setup_info["Setup"][registered_game_object_name]["Type"]
+	
+	arguments = setup_info["Setup"][registered_game_object_name]["Arguments"]
+	
+	arguments.update({"Name":registered_game_object_name})
+	
+	game_object = copy.copy(game_object_types[type])
+	
+	for argument_name in arguments:
+		game_object.set_attr(argument_name.lower(), arguments[argument])
+		
+	registered_game_objects.append(game_object)
+
+game_objects_to_scenes = {
+}
+
+for registered_game_object in registered_game_objects:
+	if registered_game_object.type == "Scene":
+		game_objects_to_scenes.update({registered_game_object.name:[]})
+		
+		for other_registered_game_object in registered_game_objects:
+			if other_registered_game_object.name in registered_game_object.game_objects:
+				game_obejcts_to_scenes[registered_game_object.name].append(other_registered_game_object)
+				
+for scene in game_objects_to_scenes:
+	scene.game_objects = pygame.sprite.Group()
+	for game_object in game_objects_to_scenes[scene]:
+		game_object.setup()
+		
+		scene.game_objects.append(game_object)
 
 
 current_scene = game.get_scene()
@@ -128,10 +136,7 @@ while is_running:
     #Draw
     virtual_screen.fill((255, 255, 255))
     
-    current_scene.game_objects["Game Objects Normal Render"].draw(virtual_screen)
-    
-    for game_object in current_scene.game_objects["Game Objects Not Normal Render"]:
-    	game_object.render()
+    current_scene.game_objects.draw(virtual_screen)
     
     #Update
     current_scene.tick()
