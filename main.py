@@ -17,7 +17,7 @@ PATH_TO_FOLDER_WHERE_SOUNDS = "sounds"
 
 ICON_FILE_NAME = "icon.png"
 
-CONFIG_ANIMATIONS_FILE_NAME = "animations.json"
+CONFIG_ANIMATIONS_FILE_NAME = "register_animations.json"
 
 CONFIG_REGISTER_OBJECTS_FILE_NAME = "register_objects.json"
 
@@ -58,10 +58,10 @@ pygame.display.set_icon(icon_image)
 
 config_animations = utils.read_file(utils.path(PATH_TO_FOLDER_WHERE_SETTINGS+"/"+CONFIG_ANIMATIONS_FILE_NAME, ENVIRONMENT_OS))
 
-logic.Entity.set_attr("config", config)
-logic.Entity.set_attr("config_animations", config_animations)
-logic.Wall.set_attr("config_animations", config_animations)
-logic.Wall.set_attr("config", config)
+setattr(logic.Entity, "config", config)
+setattr(logic.Entity, "config_animations", config_animations)
+setattr(logic.Wall, "config_animations", config_animations)
+setattr(logic.Wall, "config", config)
 
 screen_size = screen.get_size()
 
@@ -80,27 +80,27 @@ object_types = {
 game_object_types = {}
 
 for registered_object_name in register_objects_info["Register_objects"]:
-	type = register_objects_info["Register_objects"][registered_object_name]["Type"]
+	type_ = register_objects_info["Register_objects"][registered_object_name]["Type"]
 	
 	parameters = list(register_objects_info["Register_objects"][registered_object_name].values())
 	
-	game_object_type = object_types[type](*parameters)
+	game_object_type = object_types[type_](*parameters)
 	
 	game_object_types.update({registered_object_name:game_object_type})
 
 registered_game_objects = []
 
 for registered_game_object_name in setup_info["Setup"]:
-	type = setup_info["Setup"][registered_game_object_name]["Type"]
+	type_ = setup_info["Setup"][registered_game_object_name]["Type"]
 	
 	arguments = setup_info["Setup"][registered_game_object_name]["Arguments"]
 	
 	arguments.update({"Name":registered_game_object_name})
 	
-	game_object = copy.copy(game_object_types[type])
+	game_object = copy.copy(game_object_types[type_])
 	
 	for argument_name in arguments:
-		game_object.set_attr(argument_name.lower(), arguments[argument])
+		setattr(game_object, argument_name.lower(), arguments[argument_name])
 		
 	registered_game_objects.append(game_object)
 
@@ -109,18 +109,24 @@ game_objects_to_scenes = {
 
 for registered_game_object in registered_game_objects:
 	if registered_game_object.type == "Scene":
-		game_objects_to_scenes.update({registered_game_object.name:[]})
+		game_objects_to_scenes.update({registered_game_object:[]})
 		
 		for other_registered_game_object in registered_game_objects:
 			if other_registered_game_object.name in registered_game_object.game_objects:
-				game_obejcts_to_scenes[registered_game_object.name].append(other_registered_game_object)
+				game_objects_to_scenes[registered_game_object].append(other_registered_game_object)
+	elif registered_game_object.name == "Camera":
+		for other_registered_game_object in registered_game_objects:
+				type(other_registered_game_object).camera = registered_game_object	
 				
 for scene in game_objects_to_scenes:
 	scene.game_objects = pygame.sprite.Group()
+	
 	for game_object in game_objects_to_scenes[scene]:
 		game_object.setup()
 		
-		scene.game_objects.append(game_object)
+		scene.game_objects.add(game_object)
+	
+	game.add_scene(scene)
 
 
 current_scene = game.get_scene()
