@@ -29,13 +29,27 @@ class Game:
         return self.__current_scene        
 
 
-class Scene:
+class Constructable:
+	def __init__(self, type):
+		self.arguments = arguments
+
+
+class Scene(Constructable):
     def __init__(self, type):
-        self.type = type
+        super().__init__()
+        
+        self.type = seld.arguments[0]
         
         self.name = None
         
         self.game_objects = pygame.sprite.Group()
+     
+     def setup(self):
+        self.type = self.arguments[0]
+        
+        self.name = None
+        
+        self.game_objects
         
     def add_game_object(self, new_game_object):
     	self.game_objects.add(new_game_object)
@@ -44,7 +58,7 @@ class Scene:
     	seld.game_objects.remove(old_game_object)
     	
     def tick(self):
-        game_objects.update()
+        self.game_objects.update()
 
 
 class Grass(pygame.sprite.Sprite):
@@ -165,29 +179,15 @@ class PeaShooter(pygame.sprite.Sprite):
 		self.__animation_current_frame = new_animation_current_frame
 		
 		
-class Entity(pygame.sprite.Sprite):
-	camera = None
-	
-	def __init__(self, name, animation_name, position):
-		self.name = name
-		
-		self.animation_name = animation_name
-		
-		self.position = position
-		
-	def update(self):
-		pass
-	
-	def setup(self):
-		pass
-	
-class Wall(pygame.sprite.Sprite):
+class Entity(Constructable, pygame.sprite.Sprite):
 	camera = None
 	
 	def __init__(self, type, animation_name):
-		self.type = type
+		super().__init__()
 		
-		self.animation_name = animation_name
+		self.type = seld.arguments[0]
+		
+		self.animation_name = seld.arguments[0]
 		
 		self.name = None
 		
@@ -204,16 +204,20 @@ class Wall(pygame.sprite.Sprite):
 		self.state = "Default"
 		
 		self.animation_frame_images = {}
+		
+		self.image = None
+		
+		self.rect = None
 	
 	def update(self):
-		self.rect.x = self.position[0] - Wall.camera.position[0]
-		self.rect.y = self.position[1] - Wall.camera.position[1]
+		self.rect.x = self.position[0] - type(self).camera.position[0]
+		self.rect.y = self.position[1] - type(self).camera.position[1]
 		
 		if self.ticks-self.last_frame_flip_ticks == self.animation_ticks[self.state][self.animation_current_frame]-1:
 			if self.animation_current_frame + 1 > len(self.animation_frame_images) - 1:
 				self.animation_current_frame = 0
 			else:
-					self.animation_current_frame
+				self.animation_current_frame += 1
 			
 			self.last_frame_flip_ticks = self.ticks
 				
@@ -222,11 +226,13 @@ class Wall(pygame.sprite.Sprite):
 		self.ticks += 1
 	
 	def setup(self):
+		super().__init__()
+		
 		config = type(self).config
 		
 		animation_info = type(self).config_animations["Animations"][self.animation_name]
 		
-		sprites_folder_path = config["Path_to_folder_where_images"]
+		sprites_folder_path = "sprites"
 		
 		for animation_state in animation_info:
 			self.animation_ticks.update({animation_state:animation_info[animation_state]["Ticks"]})
@@ -234,8 +240,83 @@ class Wall(pygame.sprite.Sprite):
 			self.animation_frame_images.update({animation_state:[]})
 			
 			for frame_number in range(1, animation_info[animation_state]["Frames"]+1):
-				frame_path = sprites_folder_path+self.animation_name.lower()+"_"+animation_state.lower()+str(frame_number)
+				frame_path = sprites_folder_path+"/"+self.animation_name.lower()+"_"+animation_state.lower()+str(frame_number)+".png"
 				
 				frame_image = pygame.image.load(utils.path(frame_path))
 				
 				self.animation_frame_images[animation_state].append(frame_image)
+				
+		self.image = self.animation_frame_images[self.state][self.animation_current_frame]
+				
+		self.rect = self.image.get_rect()
+	
+class Wall(pygame.sprite.Sprite):
+	camera = None
+	
+	def __init__(self, type, animation_name):
+		super().__init__()
+		
+		self.type = self.arguments[0]
+		
+		self.animation_name = self.arguments[0]
+		
+		self.name = None
+		
+		self.position = None
+		
+		self.ticks = 0
+		
+		self.last_frame_flip_ticks = self.ticks
+		
+		self.animation_ticks = {}
+		
+		self.animation_current_frame = 0
+		
+		self.state = "Default"
+		
+		self.animation_frame_images = {}
+		
+		self.image = None
+		
+		self.rect = None
+	
+	def update(self):
+		self.rect.x = self.position[0]
+		self.rect.y = self.position[1]
+		
+		if self.ticks-self.last_frame_flip_ticks == self.animation_ticks[self.state][self.animation_current_frame]-1:
+			if self.animation_current_frame + 1 > len(self.animation_frame_images) - 1:
+				self.animation_current_frame = 0
+			else:
+				self.animation_current_frame += 1
+			
+			self.last_frame_flip_ticks = self.ticks
+				
+		self.image = self.animation_frame_images[self.state][self.animation_current_frame]
+				
+		self.ticks += 1
+	
+	def setup(self):
+		super().__init__()
+		
+		config = type(self).config
+		
+		animation_info = type(self).config_animations["Animations"][self.animation_name]
+		
+		sprites_folder_path = "sprites"
+		
+		for animation_state in animation_info:
+			self.animation_ticks.update({animation_state:animation_info[animation_state]["Ticks"]})
+			
+			self.animation_frame_images.update({animation_state:[]})
+			
+			for frame_number in range(1, animation_info[animation_state]["Frames"]+1):
+				frame_path = sprites_folder_path+"/"+self.animation_name.lower()+"_"+animation_state.lower()+str(frame_number)+".png"
+				
+				frame_image = pygame.image.load(utils.path(frame_path))
+				
+				self.animation_frame_images[animation_state].append(frame_image)
+				
+		self.image = self.animation_frame_images[self.state][self.animation_current_frame]
+				
+		self.rect = self.image.get_rect()
