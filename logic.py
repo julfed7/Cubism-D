@@ -28,28 +28,15 @@ class Game:
     def current_scene(self):
         return self.__current_scene        
 
-
-class Constructable:
-	def __init__(self, type):
-		self.arguments = arguments
-
-
-class Scene(Constructable):
+class Scene:
     def __init__(self, type):
         super().__init__()
         
-        self.type = seld.arguments[0]
+        self.type = type
         
         self.name = None
         
         self.game_objects = pygame.sprite.Group()
-     
-     def setup(self):
-        self.type = self.arguments[0]
-        
-        self.name = None
-        
-        self.game_objects
         
     def add_game_object(self, new_game_object):
     	self.game_objects.add(new_game_object)
@@ -179,15 +166,15 @@ class PeaShooter(pygame.sprite.Sprite):
 		self.__animation_current_frame = new_animation_current_frame
 		
 		
-class Entity(Constructable, pygame.sprite.Sprite):
+class Entity(pygame.sprite.Sprite):
 	camera = None
 	
 	def __init__(self, type, animation_name):
 		super().__init__()
 		
-		self.type = seld.arguments[0]
+		self.type = type
 		
-		self.animation_name = seld.arguments[0]
+		self.animation_name = animation_name
 		
 		self.name = None
 		
@@ -256,9 +243,9 @@ class Wall(pygame.sprite.Sprite):
 	def __init__(self, type, animation_name):
 		super().__init__()
 		
-		self.type = self.arguments[0]
+		self.type = type
 		
-		self.animation_name = self.arguments[0]
+		self.animation_name = animation_name
 		
 		self.name = None
 		
@@ -281,8 +268,8 @@ class Wall(pygame.sprite.Sprite):
 		self.rect = None
 	
 	def update(self):
-		self.rect.x = self.position[0]
-		self.rect.y = self.position[1]
+		self.rect.x = self.position[0] - type(self).camera.position[0]
+		self.rect.y = self.position[1] - type(self).camera.position[1]
 		
 		if self.ticks-self.last_frame_flip_ticks == self.animation_ticks[self.state][self.animation_current_frame]-1:
 			if self.animation_current_frame + 1 > len(self.animation_frame_images) - 1:

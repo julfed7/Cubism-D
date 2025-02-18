@@ -5,7 +5,7 @@ import pygame
 import copy
 
 
-ENVIRONMENT_OS = "Android"
+ENVIRONMENT_OS = "Windows"
 
 PATH_TO_FOLDER_WHERE_SETTINGS = "settings"
 
@@ -114,7 +114,7 @@ for registered_game_object in registered_game_objects:
 		for other_registered_game_object in registered_game_objects:
 			if other_registered_game_object.name in registered_game_object.game_objects:
 				game_objects_to_scenes[registered_game_object].append(other_registered_game_object)
-	elif registered_game_object.name == "Camera":
+	elif registered_game_object.name == "Player_fov":
 		for other_registered_game_object in registered_game_objects:
 				type(other_registered_game_object).camera = registered_game_object	
 				
