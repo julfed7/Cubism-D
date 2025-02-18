@@ -3,11 +3,23 @@
     "Main": {
       "Type": "World",
       "Arguments": {
-        "Game_objects": ["Block"]
+        "Game_objects": ["Player_fov", "Block", "Plant"]
       }
     },
     "Block": {
       "Type": "Grass",
+      "Arguments": {
+        "Position": [600, 0]
+      }
+    },
+    "Plant": {
+      "Type": "PeaShooter",
+      "Arguments": {
+        "Position": [600, 600]
+      }
+    },
+    "Player_fov": {
+      "Type": "Camera",
       "Arguments": {
         "Position": [0, 0]
       }

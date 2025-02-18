@@ -10,6 +10,10 @@
     },
     "World": {
       "Type": "Scene"
+    },
+    "Camera": {
+      "Type": "Entity",
+      "Animation_name": "Camera"
     }
   }
 }
