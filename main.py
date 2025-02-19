@@ -5,7 +5,7 @@ import pygame
 import copy
 
 
-ENVIRONMENT_OS = "Windows"
+ENVIRONMENT_OS = "Android"
 
 PATH_TO_FOLDER_WHERE_SETTINGS = "settings"
 
@@ -49,32 +49,31 @@ screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
 
 virtual_screen = pygame.Surface((WIDTH, HEIGHT))
 
-icon_image = pygame.image.load(utils.path("sprites/"+ICON_FILE_NAME, ENVIRONMENT_OS))
+icon_image = pygame.image.load(utils.path("sprites/icon.png", ENVIRONMENT_OS))
 
 pygame.display.set_caption(TITLE)
 
 pygame.display.set_icon(icon_image)
 
 
-config_animations = utils.read_file(utils.path(PATH_TO_FOLDER_WHERE_SETTINGS+"/"+CONFIG_ANIMATIONS_FILE_NAME, ENVIRONMENT_OS))
+config_animations = utils.read_file(utils.path("settings/register_animations.json", ENVIRONMENT_OS))
 
-setattr(logic.Entity, "config", config)
-setattr(logic.Entity, "config_animations", config_animations)
-setattr(logic.Wall, "config_animations", config_animations)
-setattr(logic.Wall, "config", config)
+setattr(logic.GameObjectType, "config", config)
+setattr(logic.GameObjectType, "config_animations", config_animations)
 
 screen_size = screen.get_size()
 
 game = logic.Game()
 
-register_objects_info = utils.read_file(utils.path(PATH_TO_FOLDER_WHERE_SETTINGS+"/"+CONFIG_REGISTER_OBJECTS_FILE_NAME, ENVIRONMENT_OS))
+register_objects_info = utils.read_file(utils.path("settings/register_objects.json", ENVIRONMENT_OS))
 
-setup_info = utils.read_file(utils.path(PATH_TO_FOLDER_WHERE_SETTINGS+"/"+CONFIG_SETUP_FILE_NAME, ENVIRONMENT_OS))
+setup_info = utils.read_file(utils.path("settings/setup.json", ENVIRONMENT_OS))
 
 object_types = {
   "Scene": logic.Scene,
   "Entity": logic.Entity,
-  "Wall": logic.Wall
+  "Wall": logic.Wall,
+  "Camera": logic.Camera
 }
 
 game_object_types = {}
