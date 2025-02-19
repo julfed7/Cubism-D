@@ -12,7 +12,7 @@
       "Type": "Scene"
     },
     "Camera": {
-      "Type": "Entity",
+      "Type": "Camera",
       "Animation_name": "Camera"
     }
   }
