@@ -9,7 +9,7 @@
       "Animation_name": "Grass"
     },
     "World": {
-      "Type": "Scene"
+      "Type": "CommonScene"
     },
     "Camera": {
       "Type": "Camera",
