@@ -58,19 +58,20 @@ pygame.display.set_icon(icon_image)
 
 config_animations = utils.read_file(utils.path("settings/register_animations.json", ENVIRONMENT_OS))
 
-setattr(logic.GameObjectType, "config", config)
-setattr(logic.GameObjectType, "config_animations", config_animations)
+setattr(logic.GameObject, "config", config)
+setattr(logic.GameObject, "config_animations", config_animations)
 
 screen_size = screen.get_size()
 
 game = logic.Game()
+game.setup(virtual_screen)
 
 register_objects_info = utils.read_file(utils.path("settings/register_objects.json", ENVIRONMENT_OS))
 
 setup_info = utils.read_file(utils.path("settings/setup.json", ENVIRONMENT_OS))
 
 object_types = {
-  "Scene": logic.Scene,
+  "CommonScene": logic.CommonScene,
   "Entity": logic.Entity,
   "Wall": logic.Wall,
   "Camera": logic.Camera
@@ -99,7 +100,8 @@ for registered_game_object_name in setup_info["Setup"]:
 	game_object = copy.copy(game_object_types[type_])
 	
 	for argument_name in arguments:
-		setattr(game_object, argument_name.lower(), arguments[argument_name])
+		if hasattr(game_object, argument_name.lower()):
+			setattr(game_object, argument_name.lower(), arguments[argument_name])
 		
 	registered_game_objects.append(game_object)
 
@@ -107,7 +109,7 @@ game_objects_to_scenes = {
 }
 
 for registered_game_object in registered_game_objects:
-	if registered_game_object.type == "Scene":
+	if registered_game_object.type == "CommonScene":
 		game_objects_to_scenes.update({registered_game_object:[]})
 		
 		for other_registered_game_object in registered_game_objects:
@@ -115,15 +117,17 @@ for registered_game_object in registered_game_objects:
 				game_objects_to_scenes[registered_game_object].append(other_registered_game_object)
 	elif registered_game_object.name == "Player_fov":
 		for other_registered_game_object in registered_game_objects:
-				type(other_registered_game_object).camera = registered_game_object	
+			other_registered_game_object.camera = registered_game_object	
 				
 for scene in game_objects_to_scenes:
-	scene.game_objects = pygame.sprite.Group()
+	scene.game = game
+	scene.game_objects = {}
 	
 	for game_object in game_objects_to_scenes[scene]:
+		game_object.scene = scene
 		game_object.setup()
 		
-		scene.game_objects.add(game_object)
+		scene.game_objects.update({game_object.name:game_object})
 	
 	game.add_scene(scene)
 
@@ -141,10 +145,10 @@ while is_running:
     #Draw
     virtual_screen.fill((255, 255, 255))
     
-    current_scene.game_objects.draw(virtual_screen)
+    game.render()
     
     #Update
-    current_scene.tick()
+    game.tick(delta_time)
     
     #Window
     screen_size = screen.get_size()
