@@ -58,8 +58,15 @@ pygame.display.set_icon(icon_image)
 
 config_animations = utils.read_file(utils.path("settings/register_animations.json", ENVIRONMENT_OS))
 
+config_tilemaps = utils.read_file(utils.path("settings/register_tilemaps.json", ENVIRONMENT_OS))
+
+config_tiles = utils.read_file(utils.path("settings/register_tiles.json", ENVIRONMENT_OS))
+
 setattr(logic.GameObject, "config", config)
 setattr(logic.GameObject, "config_animations", config_animations)
+setattr(logic.TileMap, "config", config)
+setattr(logic.TileMap, "config_tilemaps", config_tilemaps)
+setattr(logic.TileMap, "config_tiles", config_tiles)
 
 screen_size = screen.get_size()
 
@@ -71,10 +78,11 @@ register_objects_info = utils.read_file(utils.path("settings/register_objects.js
 setup_info = utils.read_file(utils.path("settings/setup.json", ENVIRONMENT_OS))
 
 object_types = {
-  "CommonScene": logic.CommonScene,
+  "Scene": logic.Scene,
   "Entity": logic.Entity,
   "Wall": logic.Wall,
-  "Camera": logic.Camera
+  "Camera": logic.Camera,
+  "TileMap": logic.TileMap
 }
 
 game_object_types = {}
@@ -87,6 +95,9 @@ for registered_object_name in register_objects_info["Register_objects"]:
 	game_object_type = object_types[type_](*parameters)
 	
 	game_object_types.update({registered_object_name:game_object_type})
+	
+setattr(logic.TileMap, "game_object_types", game_object_types)
+setattr(logic.TileMap, "setup_info", setup_info)
 
 registered_game_objects = []
 
@@ -109,7 +120,7 @@ game_objects_to_scenes = {
 }
 
 for registered_game_object in registered_game_objects:
-	if registered_game_object.type == "CommonScene":
+	if registered_game_object.type == "Scene":
 		game_objects_to_scenes.update({registered_game_object:[]})
 		
 		for other_registered_game_object in registered_game_objects:
@@ -131,8 +142,6 @@ for scene in game_objects_to_scenes:
 	
 	game.add_scene(scene)
 
-
-current_scene = game.get_scene()
 
 while is_running:
     for event in pygame.event.get():
