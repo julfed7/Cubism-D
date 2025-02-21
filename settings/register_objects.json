@@ -8,11 +8,15 @@
       "Type": "Wall",
       "Animation_name": "Grass"
     },
-    "World": {
-      "Type": "CommonScene"
+    "CommonScene": {
+      "Type": "Scene"
     },
-    "Camera": {
+    "CommonCamera": {
       "Type": "Camera",
+      "Animation_name": "Camera"
+    },
+    "CommonTilemap": {
+      "Type": "TileMap",
       "Animation_name": "Camera"
     }
   }

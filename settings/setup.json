@@ -1,9 +1,9 @@
 {
   "Setup": {
     "Main": {
-      "Type": "World",
+      "Type": "CommonScene",
       "Arguments": {
-        "Game_objects": ["Player_fov", "Block", "Plant"]
+        "Game_objects": ["Player_fov", "Block", "Plant", "MapWorld"]
       }
     },
     "Block": {
@@ -19,9 +19,16 @@
       }
     },
     "Player_fov": {
-      "Type": "Camera",
+      "Type": "CommonCamera",
       "Arguments": {
         "Position": [0, 0]
+      }
+    },
+    "MapWorld": {
+      "Type": "CommonTilemap",
+      "Arguments": {
+        "Position": [0, 0],
+        "TileMap_name": "World"
       }
     }
   }
