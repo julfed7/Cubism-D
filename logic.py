@@ -1,5 +1,6 @@
 import utils
 import pygame
+import copy
 
 
 class Game:
@@ -88,8 +89,6 @@ class GameObject(pygame.sprite.Sprite):
 		self.rect.x = self.position[0] - self.camera.position[0]
 		self.rect.y = self.position[1] - self.camera.position[1]
 			
-		self.image = self.animation_frame_images[self.state][self.animation_current_frame]
-			
 		if self.ticks-self.last_frame_flip_ticks == self.animation_ticks[self.state][self.animation_current_frame]-1:
 			if self.animation_current_frame + 1 > len(self.animation_frame_images[self.state]) - 1:
 				self.animation_current_frame = 0
@@ -97,7 +96,9 @@ class GameObject(pygame.sprite.Sprite):
 				self.animation_current_frame += 1
 				
 			self.last_frame_flip_ticks = self.ticks
-		
+
+		self.image = self.animation_frame_images[self.state][self.animation_current_frame]
+
 		self.ticks += 1
 			
 	def setup(self):
@@ -126,10 +127,6 @@ class GameObject(pygame.sprite.Sprite):
 		self.rect = self.image.get_rect()
 
 
-class CommonScene(Scene):
-	pass
-
-
 class Entity(GameObject):
 	pass
 
@@ -139,8 +136,46 @@ class Wall(GameObject):
 
 
 class Camera(GameObject):
+	def draw(self, screen):
+		pass
+	
 	def set_position(self, new_position):
 		self.position = new_position
+
+
+class TileMap(GameObject):
+	tiles_images = {}
+	
+	def __init__(self, type, animation_name):
+		self.tilemap_name = None
+		super().__init__(type, animation_name)
+		
+	def setup(self):
+		super().setup()
+		
+		tilemap_info = type(self).config_tilemaps["TileMaps"][self.tilemap_name]
+		
+		tiles_info = type(self).config_tiles["Tiles"]
+		
+		for tile_id in tiles_info:
+			if tiles_info[tile_id] in type(self).game_object_types:
+				arguments = setup_info["Setup"][tiles_info[tile_id]]["Arguments"]
+				
+				arguments.update({"Name":registered_game_object_name})
+				
+				game_object = copy.copy(type(self).game_object_types[tiles_info[tile_id]])
+				
+				for argument_name in arguments:
+					pass
+			else:
+				pass
+		
+		
+	def draw(self, screen):
+		pass
+		
+	def update(self, delta_time):
+		super().update(delta_time)
 
 
 
