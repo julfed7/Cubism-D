@@ -1,6 +1,7 @@
 import utils
 import pygame
 import copy
+import math
 
 
 class Game:
@@ -145,9 +146,14 @@ class Camera(GameObject):
 
 class TileMap(GameObject):
 	tiles_images = {}
+	chunks_images = {}
+	chunk_size = None
+	tile_size = None
 	
 	def __init__(self, type, animation_name):
 		self.tilemap_name = None
+		self.tilemap_size = None
+		self.map_of_chunks_size = None
 		super().__init__(type, animation_name)
 		
 	def setup(self):
@@ -157,22 +163,39 @@ class TileMap(GameObject):
 		
 		tiles_info = type(self).config_tiles["Tiles"]
 		
-		for tile_id in tiles_info:
-			if tiles_info[tile_id] in type(self).game_object_types:
-				arguments = setup_info["Setup"][tiles_info[tile_id]]["Arguments"]
-				
-				arguments.update({"Name":registered_game_object_name})
-				
-				game_object = copy.copy(type(self).game_object_types[tiles_info[tile_id]])
-				
-				for argument_name in arguments:
-					pass
-			else:
-				pass
+		self.tilemap_size = int(math.sqrt(len(tilemap_info)))
 		
+		cls = type(self)
+		
+		self.map_of_chunks_size = self.tilemap_size//cls.chunk_size
+		
+		for tile_id in tiles_info:
+			if tiles_info[tile_id] not in cls.game_object_types:
+				image = pygame.image.load(utils.path("sprites/"+tiles_info[tile_id]+".png"))
+				cls.tiles_images.update({int(tile_id):image})
+				
+		for chunk_id in range(self.tilemap_size**2//cls.chunk_size):
+			chunk_image = pygame.Surface((cls.chunk_size*cls.tile_size, cls.chunk_size*cls.tile_size))
+			tiles_ids = []
+			for i in range(cls.chunk_size):
+				chunk_x = chunk_id%self.map_of_chunks_size
+				chunk_y = chunk_id//self.map_of_chunks_size
+				tiles_ids.append(tilemap_info[chunk_x*cls.chunk_size+chunk_y*cls.chunk_size*self.tilemap_size+i*cls.chunk_size*self.tilemap_size:chunk_x*cls.chunk_size+chunk_y*cls.chunk_size*self.tilemap_size+i*cls.chunk_size*self.tilemap_size+cls.chunk_size])
+			
+			for chunk_tiles_ids in tiles_ids:
+				for tile_index, tile_id in enumerate(chunk_tiles_ids):
+					x = tile_index%cls.chunk_size*cls.tile_size
+					y = tile_index//cls.chunk_size*cls.tile_size
+					chunk_image.blit(cls.tiles_images[tile_id], [x, y])
+					cls.chunks_images.update({chunk_id:chunk_image})
 		
 	def draw(self, screen):
-		pass
+		cls = type(self)
+		for chunk_id in cls.chunks_images:
+				chunk_image = cls.chunks_images[chunk_id]
+				chunk_x = chunk_id%self.map_of_chunks_size*cls.chunk_size*cls.tile_size
+				chunk_y = chunk_id//self.map_of_chunks_size*cls.chunk_size*cls.tile_size
+				screen.blit(chunk_image, [chunk_x, chunk_y])
 		
 	def update(self, delta_time):
 		super().update(delta_time)
