@@ -33,6 +33,10 @@ WIDTH = config["App"]["Width"]
 
 HEIGHT = config["App"]["Height"]
 
+CHUNK_SIZE = config["App"]["Chunk_size"]
+
+TILE_SIZE = config["App"]["Tile_size"]
+
 
 ticks = 0
 
@@ -67,6 +71,8 @@ setattr(logic.GameObject, "config_animations", config_animations)
 setattr(logic.TileMap, "config", config)
 setattr(logic.TileMap, "config_tilemaps", config_tilemaps)
 setattr(logic.TileMap, "config_tiles", config_tiles)
+setattr(logic.TileMap, "chunk_size", CHUNK_SIZE)
+setattr(logic.TileMap, "tile_size", TILE_SIZE)
 
 screen_size = screen.get_size()
 
