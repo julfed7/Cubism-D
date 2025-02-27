@@ -48,6 +48,7 @@ screen_orientation = "Landscape"
 
 is_running = True
 
+pygame.init()
 
 screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
 
@@ -77,7 +78,7 @@ setattr(logic.TileMap, "tile_size", TILE_SIZE)
 screen_size = screen.get_size()
 
 game = logic.Game()
-game.setup(virtual_screen)
+game.setup(virtual_screen, virtual_screen.get_size())
 
 register_objects_info = utils.read_file(utils.path("settings/register_objects.json", ENVIRONMENT_OS))
 
@@ -103,7 +104,7 @@ for registered_object_name in register_objects_info["Register_objects"]:
 	game_object_types.update({registered_object_name:game_object_type})
 	
 setattr(logic.TileMap, "game_object_types", game_object_types)
-setattr(logic.TileMap, "setup_info", setup_info)
+setattr(logic.TileMap, "register_objects_info", register_objects_info)
 
 registered_game_objects = []
 
@@ -144,7 +145,7 @@ for scene in game_objects_to_scenes:
 		game_object.scene = scene
 		game_object.setup()
 		
-		scene.game_objects.update({game_object.name:game_object})
+		scene.add_game_object(game_object)
 	
 	game.add_scene(scene)
 
@@ -156,14 +157,6 @@ while is_running:
         elif event.type == pygame.KEYUP:
             if event.key == pygame.K_ESCAPE:
                 is_running = False
-                
-    #Draw
-    virtual_screen.fill((255, 255, 255))
-    
-    game.render()
-    
-    #Update
-    game.tick(delta_time)
     
     #Window
     screen_size = screen.get_size()
@@ -185,7 +178,21 @@ while is_running:
     
     changed_virtual_screen = pygame.transform.scale(virtual_screen, size)
     
-    screen.blit(changed_virtual_screen, (screen_size[0]/2-size[0]/2, screen_size[1]/2-size[1]/2))
+    changed_virtual_screen_position = (screen_size[0]/2-size[0]/2, screen_size[1]/2-size[1]/2)
+    
+    game.changed_virtual_screen_position = changed_virtual_screen_position
+    
+    game.screen_size = screen_size
+    
+    screen.blit(changed_virtual_screen, changed_virtual_screen_position)
+
+    #Draw
+    virtual_screen.fill((255, 255, 255))
+    
+    game.render()
+    
+    #Update
+    game.tick(delta_time, changed_virtual_screen_position)
     	
     pygame.display.flip()
 
