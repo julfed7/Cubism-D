@@ -3,7 +3,7 @@
     "Main": {
       "Type": "CommonScene",
       "Arguments": {
-        "Game_objects": ["Player_fov", "Block", "Plant", "MapWorld"]
+        "Game_objects": ["Block", "Player_fov", "A_MapWorld", "Plant"]
       }
     },
     "Block": {
@@ -15,7 +15,7 @@
     "Plant": {
       "Type": "PeaShooter",
       "Arguments": {
-        "Position": [600, 600]
+        "Position": [600, 100]
       }
     },
     "Player_fov": {
@@ -24,7 +24,7 @@
         "Position": [0, 0]
       }
     },
-    "MapWorld": {
+    "A_MapWorld": {
       "Type": "CommonTilemap",
       "Arguments": {
         "Position": [0, 0],
