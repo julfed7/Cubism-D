@@ -70,9 +70,14 @@ class Scene:
         self.game = None
 
         self.current_camera = None
+        
+        self.current_player_game_object = None
+        
+        self.player_game_object_name = None
 
     def setup(self):
-        pass
+        if self.player_game_object_name:
+        	self.current_player_game_object = self.game_objects[self.player_game_object_name]
         
     def add_game_object(self, new_game_object):
         self.game_objects.update({new_game_object.name:new_game_object})
@@ -109,9 +114,14 @@ class GameObject(pygame.sprite.Sprite):
         self.scene = None
 
     def draw(self, screen):
+        self.screen = screen
+        
         screen.blit(self.image, self.rect)
 
     def update(self, delta_time, changed_virtual_screen_position):
+        self.delta_time = delta_time
+        self.changed_virtual_screen_position = changed_virtual_screen_position
+        
         self.rect.x = self.position[0] - self.camera.position[0]
         self.rect.y = self.position[1] - self.camera.position[1]
 
@@ -173,8 +183,26 @@ class Camera(GameObject):
     def __init__(self, *args):
        super().__init__(*args)
        self.targeting_game_object = None
+       self.mode = None
+       self.target_game_object_name = None
+    def setup(self):
+       super().setup()
+       self.targeting_game_object = self.scene.game_objects[self.target_game_object_name]
+       
     def draw(self, screen):
         pass
+     
+    def update(self, *args):
+    	super().update(*args)
+    	if self.mode == "Focus_at_game_object":
+    		self.focus_at_game_object()
+    	elif self.mode == "Static":
+    		pass
+
+    		
+    def focus_at_game_object(self):
+    	if self.targeting_game_object:
+    		self.set_position([self.targeting_game_object.position[0]-self.scene.game.virtual_screen_size[0]/2+self.targeting_game_object.rect.width/2, self.targeting_game_object.position[1]-self.scene.game.virtual_screen_size[1]/2+self.targeting_game_object.rect.height/2])
 
     def set_position(self, new_position):
         self.position = new_position
@@ -260,7 +288,20 @@ class TileMap(GameObject):
                 chunk_image = cls.chunks_images[chunk_id]
                 chunk_x = chunk_id%self.map_of_chunks_size*cls.chunk_size*cls.tile_size
                 chunk_y = chunk_id//self.map_of_chunks_size*cls.chunk_size*cls.tile_size
-                screen.blit(chunk_image, [chunk_x, chunk_y])
+                screen.blit(chunk_image, [chunk_x+self.rect.x, chunk_y+self.rect.y])
 
     def update(self, delta_time, changed_virtual_screen_position):
         super().update(delta_time, changed_virtual_screen_position)
+
+class JoyStick(GameObject):
+	def __init__(self, *args):
+		super().__init__(*args)
+		self.color = None
+		self.radius = None
+		self.border_radius = None
+	def setup(self, *args):
+		super().setup(*args)
+	def draw(self, *args):
+		pygame.draw.circle(self.scene.game.screen, self.color, [self.rect.x, self.rect.y], self.radius, self.border_radius)
+	def update(self, *args):
+		self.update(*args)
