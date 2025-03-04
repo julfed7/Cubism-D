@@ -5,7 +5,7 @@ import pygame
 import copy
 
 
-ENVIRONMENT_OS = "Android"
+ENVIRONMENT_OS = "Windows"
 
 PATH_TO_FOLDER_WHERE_SETTINGS = "settings"
 
@@ -22,7 +22,7 @@ CONFIG_ANIMATIONS_FILE_NAME = "register_animations.json"
 CONFIG_REGISTER_OBJECTS_FILE_NAME = "register_objects.json"
 
 CONFIG_SETUP_FILE_NAME = "setup.json"
-      
+
 config = utils.read_file(utils.path(PATH_TO_FOLDER_WHERE_SETTINGS+"/"+CONFIG_APP_FILE_NAME, ENVIRONMENT_OS))
 
 TITLE = config["App"]["Title"]
@@ -135,79 +135,87 @@ for registered_game_object in registered_game_objects:
 				game_objects_to_scenes[registered_game_object].append(other_registered_game_object)
 	elif registered_game_object.name == "Player_fov":
 		for other_registered_game_object in registered_game_objects:
-			other_registered_game_object.camera = registered_game_object	
-				
+			if other_registered_game_object.name == "Player":
+				registered_game_object.targeting_game_object = other_registered_game_object
+		for other_registered_game_object in registered_game_objects:
+			other_registered_game_object.camera = registered_game_object
+
+		for other_registered_game_object in registered_game_objects:
+			if other_registered_game_object.type == "Scene":
+				other_registered_game_object.current_camera = registered_game_object
 for scene in game_objects_to_scenes:
 	scene.game = game
 	scene.game_objects = {}
-	
+
 	for game_object in game_objects_to_scenes[scene]:
 		game_object.scene = scene
 		game_object.setup()
-		
+
 		scene.add_game_object(game_object)
-	
+
+	scene.setup()
+
 	game.add_scene(scene)
 
 
 while is_running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            is_running = False
-        elif event.type == pygame.KEYUP:
-            if event.key == pygame.K_ESCAPE:
-                is_running = False
-    
-    #Window
-    screen_size = screen.get_size()
-    
-    last_screen_orientation = screen_orientation
-    
-    if screen_size[0] > screen_size[1]:
-    	screen_orientation = "Landscape"
-    else:
-    	screen_orientation = "Portret"
-    
-    if screen_orientation != last_screen_orientation:
-    	screen.fill((0, 0, 0))
-    
-    if screen_orientation == "Landscape":
-    	size = (screen_size[1]/HEIGHT*WIDTH, screen_size[1])
-    elif screen_orientation == "Portret":
-    	size = (screen_size[0], screen_size[0]/WIDTH*HEIGHT)
-    
-    changed_virtual_screen = pygame.transform.scale(virtual_screen, size)
-    
-    changed_virtual_screen_position = (screen_size[0]/2-size[0]/2, screen_size[1]/2-size[1]/2)
-    
-    game.changed_virtual_screen_position = changed_virtual_screen_position
-    
-    game.screen_size = screen_size
-    
-    screen.blit(changed_virtual_screen, changed_virtual_screen_position)
+	for event in pygame.event.get():
+		if event.type == pygame.QUIT:
+			is_running = False
+		elif event.type == pygame.KEYUP:
+			if event.key == pygame.K_ESCAPE:
+				is_running = False
 
-    #Draw
-    virtual_screen.fill((255, 255, 255))
-    
-    game.render()
-    
-    #Update
-    game.tick(delta_time, changed_virtual_screen_position)
-    	
-    pygame.display.flip()
+	#Window
+	screen_size = screen.get_size()
 
-    #FPS
-    ticks += 1
-    
-    delta_time = time.time()-last_time
-    
-    last_time = time.time()
-    
-    sleep_time = 1/FPS - delta_time
-    
-    if sleep_time < 0:
-        sleep_time = 0
-        
-    time.sleep(sleep_time)
+	last_screen_orientation = screen_orientation
+
+	if screen_size[0] > screen_size[1]:
+		screen_orientation = "Landscape"
+	else:
+		screen_orientation = "Portret"
+
+	if screen_orientation != last_screen_orientation:
+		screen.fill((0, 0, 0))
+
+	if screen_orientation == "Landscape":
+		size = (screen_size[1]/HEIGHT*WIDTH, screen_size[1])
+	elif screen_orientation == "Portret":
+		size = (screen_size[0], screen_size[0]/WIDTH*HEIGHT)
+
+	changed_virtual_screen = pygame.transform.scale(virtual_screen, size)
+
+	changed_virtual_screen_position = (screen_size[0]/2-size[0]/2, screen_size[1]/2-size[1]/2)
+
+	game.changed_virtual_screen_position = changed_virtual_screen_position
+
+	game.screen_size = screen_size
+
+	screen.blit(changed_virtual_screen, changed_virtual_screen_position)
+
+	#Draw
+	virtual_screen.fill((255, 255, 255))
+
+	game.render()
+
+	#Update
+	game.tick(delta_time, changed_virtual_screen_position)
+
+	pygame.display.flip()
+
+	#FPS
+	ticks += 1
+
+	delta_time = time.time()-last_time
+
+	last_time = time.time()
+
+	sleep_time = 1/FPS - delta_time
+
+	if sleep_time < 0:
+		sleep_time = 0
+
+	time.sleep(sleep_time)
 
 pygame.quit()
