@@ -3,7 +3,7 @@
     "Main": {
       "Type": "CommonScene",
       "Arguments": {
-        "Game_objects": ["Block", "Player_fov", "A_MapWorld", "Plant"]
+        "Game_objects": ["Block", "Player_fov", "A_MapWorld", "Player"]
       }
     },
     "Block": {
@@ -12,7 +12,7 @@
         "Position": [600, 0]
       }
     },
-    "Plant": {
+    "Player": {
       "Type": "PeaShooter",
       "Arguments": {
         "Position": [600, 100]
@@ -21,7 +21,9 @@
     "Player_fov": {
       "Type": "CommonCamera",
       "Arguments": {
-        "Position": [0, 0]
+        "Position": [0, 0],
+        "Mode": "Focus_at_game_object",
+        "Target_game_object_name": "Player"
       }
     },
     "A_MapWorld": {
