@@ -18,6 +18,10 @@
     "CommonTilemap": {
       "Type": "TileMap",
       "Animation_name": "Camera"
+    },
+    "CommonJoyStick": {
+      "Type": "JoyStick",
+      "Animation_name": "Camera"
     }
   }
 }
