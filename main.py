@@ -5,7 +5,7 @@ import pygame
 import copy
 
 
-ENVIRONMENT_OS = "Windows"
+ENVIRONMENT_OS = "Android"
 
 PATH_TO_FOLDER_WHERE_SETTINGS = "settings"
 
@@ -36,6 +36,10 @@ HEIGHT = config["App"]["Height"]
 CHUNK_SIZE = config["App"]["Chunk_size"]
 
 TILE_SIZE = config["App"]["Tile_size"]
+
+PLAYER_GAME_OBJECT_NAME = config["App"]["Player_game_object_name"]
+
+CAMERA_GAME_OBJECT_NAME = config["App"]["Camera_game_object_name"]
 
 
 ticks = 0
@@ -89,7 +93,8 @@ object_types = {
   "Entity": logic.Entity,
   "Wall": logic.Wall,
   "Camera": logic.Camera,
-  "TileMap": logic.TileMap
+  "TileMap": logic.TileMap,
+  "JoyStick": logic.JoyStick
 }
 
 game_object_types = {}
@@ -133,9 +138,9 @@ for registered_game_object in registered_game_objects:
 		for other_registered_game_object in registered_game_objects:
 			if other_registered_game_object.name in registered_game_object.game_objects:
 				game_objects_to_scenes[registered_game_object].append(other_registered_game_object)
-	elif registered_game_object.name == "Player_fov":
+	elif registered_game_object.name == CAMERA_GAME_OBJECT_NAME:
 		for other_registered_game_object in registered_game_objects:
-			if other_registered_game_object.name == "Player":
+			if other_registered_game_object.name == PLAYER_GAME_OBJECT_NAME:
 				registered_game_object.targeting_game_object = other_registered_game_object
 		for other_registered_game_object in registered_game_objects:
 			other_registered_game_object.camera = registered_game_object
