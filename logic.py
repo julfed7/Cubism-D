@@ -92,7 +92,7 @@ class Scene:
         	self.player_controller_game_object = self.game_objects[self.player_controller_game_object_name]
         
     def add_game_object(self, new_game_object):
-        if not new_game_object.is_only_for_smartphones and (self.game.ENVIRONMENT_OS == "Android" or self.game.ENVIRONMENT_OS == "IOS"):
+        if (new_game_object.is_only_for_smartphones and (self.game.ENVIRONMENT_OS == "Android" or self.game.ENVIRONMENT_OS == "IOS")) or (not new_game_object.is_only_for_smartphones and (self.game.ENVIRONMENT_OS == "Windows" or self.game.ENVIRONMENT_OS == "Linux")):
          self.game_objects.update({new_game_object.name:new_game_object})
          sorted_keys = sorted(self.game_objects)
          self.game_objects = {key:self.game_objects[key] for key in sorted_keys}
@@ -366,7 +366,35 @@ class JoyStick(GameObject):
 			self.stick_position = self.position
 			self.direction = [0, 0]
 			self.mouse_pressed = False
-			
+
+class KeyBoard(GameObject):
+	def __init__(self, *args):
+		super().__init__(*args)
+		self.direction = [0, 0]
+		self.keys_data_base = {
+                    "ESCAPE": pygame.K_ESCAPE,
+                    "W": pygame.K_w,
+                    "A": pygame.K_a,
+                    "S": pygame.K_w,
+                    "D": pygame.K_w
+                }
+		self.hot_keys_data_base = {
+                    "PLAYER_UP": None,
+                    "PLAYER_DOWN": None,
+                    "PLAYER_LEFT": None,
+                    "PLAYER_RIGHT": None
+                }
+		self.hot_keys = {}
+	def setup(self, *args):
+		super().setup(*args)
+		for hot_key_name in self.hot_keys:
+                    self.hot_keys_data_base[hot_key_name] = self.keys_data_base[self.hot_keys[hot_key_name]]
+	def update(self, *args):
+		super().update(*args)
+		keys = pygame.key.get_pressed()
+		if self.hot_keys_data_base["PLAYER_UP"] and keys["PLAYER_UP"]:
+                    
+	
 class FpsCounter(GameObject):
 	def __init__(self, *args):
 		super().__init__(*args)
