@@ -5,7 +5,7 @@ import pygame
 import copy
 
 
-ENVIRONMENT_OS = "Android"
+ENVIRONMENT_OS = "Windows"
 
 PATH_TO_FOLDER_WHERE_SETTINGS = "settings"
 
