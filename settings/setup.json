@@ -3,7 +3,9 @@
     "Main": {
       "Type": "CommonScene",
       "Arguments": {
-        "Game_objects": ["Block", "Player_fov", "A_MapWorld", "Player"]
+        "Game_objects": ["Block", "Player_fov", "A_MapWorld", "Player", "JoyStickForSmartphones"],
+        "Player_game_object_name": "Player",
+        "Player_controller_game_object_name": "JoyStickForSmartphones"
       }
     },
     "Block": {
@@ -15,7 +17,8 @@
     "Player": {
       "Type": "PeaShooter",
       "Arguments": {
-        "Position": [600, 100]
+        "Position": [600, 100],
+        "Speed": 200
       }
     },
     "Player_fov": {
@@ -31,6 +34,17 @@
       "Arguments": {
         "Position": [0, 0],
         "TileMap_name": "World"
+      }
+    },
+    "JoyStickForSmartphones": {
+      "Type": "CommonJoyStick",
+      "Arguments": {
+        "Position": [200, 600],
+        "Color": "black",
+        "Radius": 100,
+        "Border_radius": 10,
+        "Touching_zone_box": [0, 0, 500, 768],
+        "Is_only_for_smartphones": false
       }
     }
   }
