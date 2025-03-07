@@ -82,7 +82,7 @@ setattr(logic.TileMap, "tile_size", TILE_SIZE)
 screen_size = screen.get_size()
 
 game = logic.Game()
-game.setup(virtual_screen, virtual_screen.get_size())
+game.setup(virtual_screen, virtual_screen.get_size(), ENVIRONMENT_OS, TILE_SIZE)
 
 register_objects_info = utils.read_file(utils.path("settings/register_objects.json", ENVIRONMENT_OS))
 
@@ -94,7 +94,8 @@ object_types = {
   "Wall": logic.Wall,
   "Camera": logic.Camera,
   "TileMap": logic.TileMap,
-  "JoyStick": logic.JoyStick
+  "JoyStick": logic.JoyStick,
+  "FpsCounter": logic.FpsCounter
 }
 
 game_object_types = {}
@@ -224,3 +225,4 @@ while is_running:
 	time.sleep(sleep_time)
 
 pygame.quit()
+		
