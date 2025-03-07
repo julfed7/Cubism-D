@@ -19,9 +19,15 @@ class Game:
         
         self.screen_size = None
         
-    def setup(self, screen, virtual_screen_size):
+        self.ENVIRONMENT_OS = None
+        
+        self.TILE_SIZE = None
+        
+    def setup(self, screen, virtual_screen_size, ENVIRONMENT_OS, TILE_SIZE):
         self.screen = screen
         self.virtual_screen_size = virtual_screen_size
+        self.ENVIRONMENT_OS = ENVIRONMENT_OS
+        self.TILE_SIZE = TILE_SIZE
         
     def render(self):
         scene = self.get_scene()
@@ -74,26 +80,46 @@ class Scene:
         self.current_player_game_object = None
         
         self.player_game_object_name = None
+        
+        self.player_controller_game_object = None
+        
+        self.player_controller_game_object_name = None
 
     def setup(self):
         if self.player_game_object_name:
         	self.current_player_game_object = self.game_objects[self.player_game_object_name]
+        if self.player_controller_game_object_name:
+        	self.player_controller_game_object = self.game_objects[self.player_controller_game_object_name]
         
     def add_game_object(self, new_game_object):
-        self.game_objects.update({new_game_object.name:new_game_object})
-        sorted_keys = sorted(self.game_objects)
-        self.game_objects = {key:self.game_objects[key] for key in sorted_keys}
+        if not new_game_object.is_only_for_smartphones and (self.game.ENVIRONMENT_OS == "Android" or self.game.ENVIRONMENT_OS == "IOS"):
+         self.game_objects.update({new_game_object.name:new_game_object})
+         sorted_keys = sorted(self.game_objects)
+         self.game_objects = {key:self.game_objects[key] for key in sorted_keys}
     def remove_game_object(self, old_game_object):
         self.game_objects.pop(old_game_object.name)
     
     def draw(self):
+        offset_position = copy.copy(self.current_camera.position)
+
+
+        for y in range(math.ceil(self.game.virtual_screen_size[1]/self.game.TILE_SIZE)):
+        	for x in range(math.ceil(self.game.virtual_screen_size[0]/self.game.TILE_SIZE)):
+        		line_x = -self.current_camera.position[0]+x*self.game.TILE_SIZE
+        		if self.current_player_game_object.velocity[0] < 0:
+        			if line_x > self.game.virtual_screen_size[0]:
+        				line_x = -x*self.game.TILE_SIZE
+        		pygame.draw.line(self.game.screen, "gray", [line_x, -self.current_camera.position[1]], [line_x, -self.current_camera.position[1]+self.game.virtual_screen_size[1]])
+        		pygame.draw.line(self.game.screen, "gray", [-self.current_camera.position[0], -self.current_camera.position[1]+y*self.game.TILE_SIZE], [-self.current_camera.position[0]+self.game.virtual_screen_size[0], -self.current_camera.position[1]+y*self.game.TILE_SIZE])
         for game_object in self.game_objects.values():
             game_object.draw(self.game.screen)
-
     
     def tick(self, delta_time, changed_virtual_screen_position):
         for game_object in self.game_objects.values():
             game_object.update(delta_time, changed_virtual_screen_position)
+        
+        if self.player_controller_game_object_name and self.player_game_object_name:
+        	self.current_player_game_object.velocity = self.player_controller_game_object.direction
 
 
 class GameObject(pygame.sprite.Sprite):	
@@ -112,6 +138,7 @@ class GameObject(pygame.sprite.Sprite):
         self.rect = None
         self.camera = None
         self.scene = None
+        self.is_only_for_smartphones = False
 
     def draw(self, screen):
         self.screen = screen
@@ -166,7 +193,15 @@ class GameObject(pygame.sprite.Sprite):
 
 
 class Entity(GameObject):
-    pass
+    def __init__(self, *args):
+    	super().__init__(*args)
+    	self.speed = 0
+    	self.velocity = [0, 0]
+    	
+    def update(self, *args):
+    	super().update(*args)
+    	self.position[0] += self.velocity[0] * self.speed * self.delta_time
+    	self.position[1] += self.velocity[1] * self.speed * self.delta_time
 
 
 class Wall(GameObject):
@@ -299,9 +334,41 @@ class JoyStick(GameObject):
 		self.color = None
 		self.radius = None
 		self.border_radius = None
+		self.default_position = None
+		self.mouse_pressed = False
+		self.touching_zone_box = None
+		self.direction = [0, 0]
+		self.stick_position = None
 	def setup(self, *args):
 		super().setup(*args)
+		self.default_position = self.position
+		self.stick_position = self.position
 	def draw(self, *args):
-		pygame.draw.circle(self.scene.game.screen, self.color, [self.rect.x, self.rect.y], self.radius, self.border_radius)
+		pygame.draw.circle(self.scene.game.screen, self.color, [self.position[0], self.position[1]], self.radius, self.border_radius)
+		pygame.draw.circle(self.scene.game.screen, self.color, [self.stick_position[0], self.stick_position[1]], self.radius/2)
 	def update(self, *args):
-		self.update(*args)
+		super().update(*args)
+		mouse_position = self.scene.game.get_mouse_pos()
+		if pygame.mouse.get_pressed()[0] and ((mouse_position[0] >= self.touching_zone_box[0] and mouse_position[0] <= self.touching_zone_box[0]+self.touching_zone_box[2] and mouse_position[1] >= self.touching_zone_box[1] and mouse_position[1] <= self.touching_zone_box[1]+self.touching_zone_box[3]) if not self.mouse_pressed else True):
+				if not self.mouse_pressed:
+					self.position = [mouse_position[0], mouse_position[1]]
+					self.mouse_pressed = True
+				angle = math.atan2(mouse_position[1]-self.position[1], mouse_position[0]-self.position[0])
+				vector_x = math.cos(angle)
+				vector_y = math.sin(angle)
+				lenght = math.sqrt((self.position[0]-mouse_position[0])**2+(self.position[1]-mouse_position[1])**2)
+				if lenght > self.radius:
+					lenght = self.radius
+				self.stick_position = [self.position[0]+vector_x*lenght, self.position[1]+vector_y*lenght]
+				self.direction = [vector_x, vector_y]
+		else:
+			self.position = self.default_position
+			self.stick_position = self.position
+			self.direction = [0, 0]
+			self.mouse_pressed = False
+			
+class FpsCounter(GameObject):
+	def __init__(self, *args):
+		super().__init__(*args)
+	def draw(self, *args):
+		super().draw(*args)
