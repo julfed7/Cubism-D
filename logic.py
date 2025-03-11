@@ -1,15 +1,18 @@
-import utils
 import pygame
 import copy
 import math
 import random
+import time
+import socket
+import json
+import utils
 
 
 class Game:
     def __init__(self):
         self.__scenes = {}
         
-        self.__current_scene = 0
+        self.current_scene = 0
         
         self.screen  = None
         
@@ -23,11 +26,32 @@ class Game:
         
         self.TILE_SIZE = None
         
-    def setup(self, screen, virtual_screen_size, ENVIRONMENT_OS, TILE_SIZE):
+        self.IP = None
+        
+        self.is_online_mode = False
+        
+        self.current_event = []
+        
+        self.ticks = 0
+        
+        self.itinerarium = None
+        
+        self.game_object_types = {}
+        
+        self.my_id = None
+        
+        self.network_checking_time = 20
+        
+        self.lagging_ticks = 15
+        
+        self.last_packet_time = time.time()
+        
+    def setup(self, screen, virtual_screen_size, ENVIRONMENT_OS, TILE_SIZE, IP):
         self.screen = screen
         self.virtual_screen_size = virtual_screen_size
         self.ENVIRONMENT_OS = ENVIRONMENT_OS
         self.TILE_SIZE = TILE_SIZE
+        self.IP = IP
         
     def render(self):
         scene = self.get_scene()
@@ -35,7 +59,115 @@ class Game:
         scene.draw()
         
     def tick(self, delta_time, changed_virtual_screen_position):
-        self.get_scene().tick(delta_time, changed_virtual_screen_position)
+        self.current_event = []
+        current_scene = self.get_scene()
+        current_scene.tick(delta_time, changed_virtual_screen_position)
+        if current_scene.is_online_mode:
+        	self.is_online_mode = True
+        else:
+        	self.is_online_mode = False
+
+        
+        if self.is_online_mode:
+          	if self.itinerarium is None:
+          			try:
+          				self.itinerarium = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+          				self.itinerarium.setblocking(False)
+          				self.current_event.append(["New client", [True]])
+          				self.current_event.append(["Create room", ["Room"]])
+          				self.current_event.append(["Join room", ["Room"]])          				
+          			except ConnectionRefusedError:
+          				self.current_scene.is_online_mode = False
+          				self.is_online_mode = False
+          				
+          	if time.time() - self.last_packet_time > self.network_checking_time:
+          				self.change_current_scene(0)
+          				self.last_packet_time = time.time()
+          				
+          	if self.ticks % 120 == 0:
+          		self.current_event.append(["Client alive", [True]])
+          		
+          	if self.current_event:
+          			try:
+	          			request = {"event_bus": self.current_event, "ticks": self.ticks}
+	          			packet = json.dumps(request)
+	          			data = packet.encode()
+	          			self.itinerarium.sendto(data, tuple(self.IP))
+	          		except BrokenPipeError:
+	          			current_scene.is_online_mode = False
+	          			self.is_online_mode = False
+          			
+          	try:
+          			data = self.itinerarium.recv(1024)
+          			packet = data.decode()
+          			start_slace = packet.find("{")
+          			end_slace = packet.find("}{")
+          			if end_slace == -1:
+          				end_slace = packet.rfind("}")
+          			packet = packet[start_slace:end_slace+1]
+          			if not packet:
+          				packet = "{}"
+          			else:
+          				response = json.loads(packet)
+          				
+          				self.last_packet_time = time.time()
+          				
+          				if abs(self.ticks - response["ticks"]) > self.lagging_ticks:
+          					self.current_event.append(["Get condition of the room", [True]])
+          				
+          				
+          				for event in response["event_bus"]:
+          					event_name = event[0]
+          					event_data = event[1]
+          					
+          					print(event_name, event_data)
+          					
+          					if event_name == "Your ID":
+          						self.my_id = event_data[0]
+          					elif event_name == "Your player ID":
+          						current_scene.my_player_id = event_data[0]
+          					elif event_name == "Add game object":
+          						if event_data[0] == "Player":
+          							game_object = copy.copy(self.game_object_types["PeaShooter"])
+          							game_object.name = "Z"+str(event_data[1])
+          							game_object.id = event_data[1]
+          							game_object.position = event_data[2]
+          							game_object.scene = current_scene
+          							game_object.camera = current_scene.current_camera
+          							game_object.is_online_mode = True
+          							game_object.setup()
+          							current_scene.add_game_object(game_object)
+          					elif event_name == "Your condition of the room":
+          							live_game_objects_names = []
+          							for game_object_data in event_data[0]["Game objects"]:
+          								game_object_type = game_object_data[0]
+          								game_object_name = "Z"+str(game_object_data[1])
+          								game_object_id = game_object_data[1]
+          								game_object_position = game_object_data[2]
+          								live_game_objects_names.append(game_object_name)
+          								if game_object_name not in current_scene.game_objects:
+          									if game_object_type == "Player":
+          										game_object = copy.copy(self.game_object_types["PeaShooter"])
+          										game_object.name = game_object_name
+          										game_object.id = game_object_id
+          										game_object.position = game_object_position
+          										game_object.scene = current_scene
+          										game_object.camera = current_scene.current_camera
+          										game_object.is_online_mode = True
+          										game_object.setup()
+          										current_scene.add_game_object(game_object)
+          								else:
+          									current_scene.game_objects[game_object_name].id = game_object_id
+          									current_scene.game_objects[game_object_name].position = game_object_position
+          								for game_object in list(current_scene.game_objects.values()):
+          									if game_object.is_online_mode and game_object.name not in live_game_objects_names:
+          										current_scene.remove_game_object(game_object)
+          					elif event_name == "Game object moved":
+          						current_scene.game_objects["Z"+str(event_data[0])].position = event_data[1]
+          	except BlockingIOError and OSError:
+          			pass
+          			
+        self.ticks += 1
         
     def get_scene(self):
         return list(self.scenes.values())[self.current_scene]
@@ -56,18 +188,17 @@ class Game:
         mouse_pos[1] = (mouse_pos[1]-self.changed_virtual_screen_position[1])/(self.screen_size[1]-self.changed_virtual_screen_position[1]*2)*self.virtual_screen_size[1]
         return mouse_pos
         
+    def change_current_scene(self, index):
+        self.current_scene = index
+        
     @property
     def scenes(self):
         return self.__scenes
-        
-    @property
-    def current_scene(self):
-        return self.__current_scene
 
 
 class Scene:
-    def __init__(self, type):        
-        self.type = type
+    def __init__(self):        
+        self.type = None
         
         self.name = None
         
@@ -77,6 +208,8 @@ class Scene:
 
         self.current_camera = None
         
+        self.current_camera_name = None
+        
         self.current_player_game_object = None
         
         self.player_game_object_name = None
@@ -84,15 +217,20 @@ class Scene:
         self.player_controller_game_object = None
         
         self.player_controller_game_object_name = None
+        
+        self.is_online_mode = False
+        
+        self.my_player_id = None
 
     def setup(self):
-        if self.player_game_object_name:
-        	self.current_player_game_object = self.game_objects[self.player_game_object_name]
         if self.player_controller_game_object_name:
-        	self.player_controller_game_object = self.game_objects[self.player_controller_game_object_name]
+        	self.player_controller_game_object = self.game_objects[self.player_controller_game_object_name[self.game.ENVIRONMENT_OS]]
+        if self.current_camera_name:
+        	self.current_camera = self.game_objects[self.current_camera_name]
         
     def add_game_object(self, new_game_object):
-        if (new_game_object.is_only_for_smartphones and (self.game.ENVIRONMENT_OS == "Android" or self.game.ENVIRONMENT_OS == "IOS")) or (not new_game_object.is_only_for_smartphones and (self.game.ENVIRONMENT_OS == "Windows" or self.game.ENVIRONMENT_OS == "Linux")):
+        if (new_game_object.is_only_for_smartphones is True and self.game.ENVIRONMENT_OS != "Windows"  and self.game.ENVIRONMENT_OS != "Linux") or new_game_object.is_only_for_smartphones is False:
+         new_game_object.camera = self.current_camera
          self.game_objects.update({new_game_object.name:new_game_object})
          sorted_keys = sorted(self.game_objects)
          self.game_objects = {key:self.game_objects[key] for key in sorted_keys}
@@ -100,32 +238,29 @@ class Scene:
         self.game_objects.pop(old_game_object.name)
     
     def draw(self):
-        offset_position = copy.copy(self.current_camera.position)
-
-
-        for y in range(math.ceil(self.game.virtual_screen_size[1]/self.game.TILE_SIZE)):
-        	for x in range(math.ceil(self.game.virtual_screen_size[0]/self.game.TILE_SIZE)):
-        		line_x = -self.current_camera.position[0]+x*self.game.TILE_SIZE
-        		if self.current_player_game_object.velocity[0] < 0:
-        			if line_x > self.game.virtual_screen_size[0]:
-        				line_x = -x*self.game.TILE_SIZE
-        		pygame.draw.line(self.game.screen, "gray", [line_x, -self.current_camera.position[1]], [line_x, -self.current_camera.position[1]+self.game.virtual_screen_size[1]])
-        		pygame.draw.line(self.game.screen, "gray", [-self.current_camera.position[0], -self.current_camera.position[1]+y*self.game.TILE_SIZE], [-self.current_camera.position[0]+self.game.virtual_screen_size[0], -self.current_camera.position[1]+y*self.game.TILE_SIZE])
         for game_object in self.game_objects.values():
             game_object.draw(self.game.screen)
     
     def tick(self, delta_time, changed_virtual_screen_position):
-        for game_object in self.game_objects.values():
-            game_object.update(delta_time, changed_virtual_screen_position)
-        
-        if self.player_controller_game_object_name and self.player_game_object_name:
-        	self.current_player_game_object.velocity = self.player_controller_game_object.direction
-
+          		if self.my_player_id is not None:
+          			if "Z"+str(self.my_player_id) in self.game_objects:
+          				self.player_game_object_name = "Z"+str(self.my_player_id)
+          		if self.player_game_object_name and self.current_player_game_object is None:
+          			self.current_player_game_object = self.game_objects[self.player_game_object_name]
+          			self.current_camera.targeting_game_object = self.current_player_game_object
+          		if self.current_player_game_object is not None and self.player_controller_game_object.direction != [0, 0]:
+          			self.current_player_game_object.move(self.player_controller_game_object.direction)
+          		for game_object in self.game_objects.values():
+          			if game_object.camera != self.current_camera:
+          				game_object.camera = self.current_camera
+          			game_object.update(delta_time, changed_virtual_screen_position)
+          			self.game.current_event += game_object.events
+          			game_object.events = []
 
 class GameObject(pygame.sprite.Sprite):	
-    def __init__(self, type, animation_name):
-        self.type = type
-        self.animation_name = animation_name
+    def __init__(self):
+        self.type = None
+        self.animation_name = None
         self.name = None
         self.position = None
         self.ticks = 0
@@ -139,6 +274,9 @@ class GameObject(pygame.sprite.Sprite):
         self.camera = None
         self.scene = None
         self.is_only_for_smartphones = False
+        self.is_online_mode = False
+        self.events = []
+        self.id = None
 
     def draw(self, screen):
         self.screen = screen
@@ -165,8 +303,8 @@ class GameObject(pygame.sprite.Sprite):
         self.ticks += 1
 
     def setup(self):
-        super().__init__()
-
+        super().__init__() 
+        
         config = type(self).config
 
         animation_info = type(self).config_animations["Animations"][self.animation_name]
@@ -189,28 +327,74 @@ class GameObject(pygame.sprite.Sprite):
 
         self.image = self.animation_frame_images[self.state][self.animation_current_frame]
 
-        self.rect = self.image.get_rect(x=self.position[0], y=self.position[1])
+        self.rect = self.image.get_rect(x=self.position[0]-self.camera.position[0], y=self.position[1]-self.camera.position[1])
 
 
 class Entity(GameObject):
     def __init__(self, *args):
     	super().__init__(*args)
-    	self.speed = 0
     	self.velocity = [0, 0]
     	
     def update(self, *args):
     	super().update(*args)
     	self.position[0] += self.velocity[0] * self.speed * self.delta_time
     	self.position[1] += self.velocity[1] * self.speed * self.delta_time
+    def move(self, direction):
+    	self.velocity[0] = direction[0]
+    	self.velocity[1] = direction[1]
+    		
+    	self.position[0] += self.speed * self.velocity[0] * self.delta_time
+    	self.rect.x = self.position[0] - self.camera.position[0]
+    	
+    	game_objects = [game_object for game_object in list(self.scene.game_objects.values())]
+    	rects = [game_object.rect for game_object in game_objects]
+    	rects.remove(self.rect)
+    	collided_rect_index = self.rect.collidelist(rects)
+    	try:
+    		collided_rect = rects[collided_rect_index]
+    	except IndexError:
+    		pass
+    		
+    	if collided_rect_index != -1:
+    		if self.velocity[0] > 0:
+    			self.rect.right = collided_rect.left
+    		elif self.velocity[0] < 0:
+    			self.rect.left = collided_rect.right
+    		self.position[0] = self.rect.x + self.camera.position[0]
+    	
+    	self.position[1] += self.speed * self.velocity[1] * self.delta_time
+    	self.rect.y = self.position[1] - self.camera.position[1]
+    	
+    	game_objects = [game_object for game_object in list(self.scene.game_objects.values())]
+    	rects = [game_object.rect for game_object in game_objects]
+    	rects.remove(self.rect)
+    	collided_rect_index = self.rect.collidelist(rects)
+    	try:
+    		collided_rect = rects[collided_rect_index]
+    	except IndexError:
+    		pass
+    	
+    	if collided_rect_index != -1:
+    		if self.velocity[1] > 0:
+    			self.rect.bottom = collided_rect.top
+    		elif self.velocity[1] < 0:
+    			self.rect.top = collided_rect.bottom
+    		self.position[1] = self.rect.y + self.camera.position[1]
+	
+    	self.events.append(["Game object moved", [self.id, self.velocity]])
+    	
+    	self.velocity = [0, 0]
 
 
 class Wall(GameObject):
     def update(self, delta_time, changed_virtual_screen_position):
+        """
         mouse_pos = self.scene.game.get_mouse_pos()
 
         if self.rect.collidepoint(mouse_pos):
             self.position[0] = random.randint(0, 1316)
             self.position[1] = random.randint(0, 718)
+        """
         super().update(delta_time, changed_virtual_screen_position)
 
 
@@ -220,9 +404,11 @@ class Camera(GameObject):
        self.targeting_game_object = None
        self.mode = None
        self.target_game_object_name = None
+       self.targeting_position = None
     def setup(self):
        super().setup()
-       self.targeting_game_object = self.scene.game_objects[self.target_game_object_name]
+       if self.target_game_object_name:
+       	self.targeting_game_object = self.scene.game_objects[self.target_game_object_name]
        
     def draw(self, screen):
         pass
@@ -232,7 +418,7 @@ class Camera(GameObject):
     	if self.mode == "Focus_at_game_object":
     		self.focus_at_game_object()
     	elif self.mode == "Static":
-    		pass
+    		self.set_position(self.targeting_position)
 
     		
     def focus_at_game_object(self):
@@ -249,11 +435,11 @@ class TileMap(GameObject):
     chunk_size = None
     tile_size = None
 
-    def __init__(self, type, animation_name):
+    def __init__(self, *args):
         self.tilemap_name = None
         self.tilemap_size = None
         self.map_of_chunks_size = None
-        super().__init__(type, animation_name)
+        super().__init__(*args)
 
     def setup(self):
         super().setup()
@@ -325,78 +511,4 @@ class TileMap(GameObject):
                 chunk_y = chunk_id//self.map_of_chunks_size*cls.chunk_size*cls.tile_size
                 screen.blit(chunk_image, [chunk_x+self.rect.x, chunk_y+self.rect.y])
 
-    def update(self, delta_time, changed_virtual_screen_position):
-        super().update(delta_time, changed_virtual_screen_position)
-
-class JoyStick(GameObject):
-	def __init__(self, *args):
-		super().__init__(*args)
-		self.color = None
-		self.radius = None
-		self.border_radius = None
-		self.default_position = None
-		self.mouse_pressed = False
-		self.touching_zone_box = None
-		self.direction = [0, 0]
-		self.stick_position = None
-	def setup(self, *args):
-		super().setup(*args)
-		self.default_position = self.position
-		self.stick_position = self.position
-	def draw(self, *args):
-		pygame.draw.circle(self.scene.game.screen, self.color, [self.position[0], self.position[1]], self.radius, self.border_radius)
-		pygame.draw.circle(self.scene.game.screen, self.color, [self.stick_position[0], self.stick_position[1]], self.radius/2)
-	def update(self, *args):
-		super().update(*args)
-		mouse_position = self.scene.game.get_mouse_pos()
-		if pygame.mouse.get_pressed()[0] and ((mouse_position[0] >= self.touching_zone_box[0] and mouse_position[0] <= self.touching_zone_box[0]+self.touching_zone_box[2] and mouse_position[1] >= self.touching_zone_box[1] and mouse_position[1] <= self.touching_zone_box[1]+self.touching_zone_box[3]) if not self.mouse_pressed else True):
-				if not self.mouse_pressed:
-					self.position = [mouse_position[0], mouse_position[1]]
-					self.mouse_pressed = True
-				angle = math.atan2(mouse_position[1]-self.position[1], mouse_position[0]-self.position[0])
-				vector_x = math.cos(angle)
-				vector_y = math.sin(angle)
-				lenght = math.sqrt((self.position[0]-mouse_position[0])**2+(self.position[1]-mouse_position[1])**2)
-				if lenght > self.radius:
-					lenght = self.radius
-				self.stick_position = [self.position[0]+vector_x*lenght, self.position[1]+vector_y*lenght]
-				self.direction = [vector_x, vector_y]
-		else:
-			self.position = self.default_position
-			self.stick_position = self.position
-			self.direction = [0, 0]
-			self.mouse_pressed = False
-
-class KeyBoard(GameObject):
-	def __init__(self, *args):
-		super().__init__(*args)
-		self.direction = [0, 0]
-		self.keys_data_base = {
-                    "ESCAPE": pygame.K_ESCAPE,
-                    "W": pygame.K_w,
-                    "A": pygame.K_a,
-                    "S": pygame.K_w,
-                    "D": pygame.K_w
-                }
-		self.hot_keys_data_base = {
-                    "PLAYER_UP": None,
-                    "PLAYER_DOWN": None,
-                    "PLAYER_LEFT": None,
-                    "PLAYER_RIGHT": None
-                }
-		self.hot_keys = {}
-	def setup(self, *args):
-		super().setup(*args)
-		for hot_key_name in self.hot_keys:
-                    self.hot_keys_data_base[hot_key_name] = self.keys_data_base[self.hot_keys[hot_key_name]]
-	def update(self, *args):
-		super().update(*args)
-		keys = pygame.key.get_pressed()
-		if self.hot_keys_data_base["PLAYER_UP"] and keys["PLAYER_UP"]:
-                    
-	
-class FpsCounter(GameObject):
-	def __init__(self, *args):
-		super().__init__(*args)
-	def draw(self, *args):
-		super().draw(*args)
+    def update(self, delta_
