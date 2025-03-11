@@ -17,6 +17,18 @@
         "Frames": 1,
         "Ticks": [60]
       }
+    },
+    "Menu_screen": {
+      "Default": {
+        "Frames": 1,
+        "Ticks": [60]
+      }
+    },
+    "Player": {
+      "Default": {
+        "Frames": 1,
+        "Ticks": [60]
+      }
     }
   }
 }
