@@ -1,24 +1,263 @@
 {
   "Setup": {
-    "Main": {
+    "Menu": {
       "Type": "CommonScene",
       "Arguments": {
-        "Game_objects": ["Block", "Player_fov", "A_MapWorld", "Player", "JoyStickForSmartphones"],
-        "Player_game_object_name": "Player",
-        "Player_controller_game_object_name": "JoyStickForSmartphones"
+        "Game_objects": ["MenuCamera", "MenuBackground","MenuButtonCompaign","MenuButtonJoinRoom","MenuButtonCreateRoom","MenuButtonSettings"],
+        "Is_online_mode": false,
+        "Current_camera_name": "MenuCamera"
+      }
+    },
+    "MenuCamera": {
+      "Type": "CommonCamera",
+      "Arguments": {
+        "Position": [0, 0],
+        "Mode": "Static",
+        "Targeting_position": [0, 0]
+      }
+    },
+    "MenuButtonCompaign": {
+      "Type": "CommonButton",
+      "Arguments": {
+        "Position": [509, 100],
+        "Text": "Compaign",
+        "Change_scene_to_index": 5
+      }
+    },
+    "MenuButtonJoinRoom": {
+      "Type": "CommonButton",
+      "Arguments": {
+        "Position": [509, 250],
+        "Text": "Join Room",
+        "Change_scene_to_index": 2
+      }
+    },
+    "MenuButtonCreateRoom": {
+      "Type": "CommonButton",
+      "Arguments": {
+        "Position": [509, 400],
+        "Text": "Create Room",
+        "Change_scene_to_index": 3
+      }
+    },
+    "MenuButtonSettings": {
+      "Type": "CommonButton",
+      "Arguments": {
+        "Position": [509, 550],
+        "Text": "Settings",
+        "Change_scene_to_index": 4
+      }
+    },
+    "MenuBackground": {
+      "Type": "MenuScreen",
+      "Arguments": {
+        "Position": [0, 0]
+      }
+    },
+    "Compaign": {
+      "Type": "CommonScene",
+      "Arguments": {
+        "Game_objects": ["CompaignCamera", "CompaignText", "CompaignText", "CompaignBackground"],
+        "Is_online_mode": false,
+        "Current_camera_name": "CompaignCamera"
+      }
+    },
+    "CompaignCamera": {
+      "Type": "CommonCamera",
+      "Arguments": {
+        "Position": [0, 0],
+        "Mode": "Static",
+        "Targeting_position": [0, 0]
+      }
+    },
+   "CompaignText": {
+      "Type": "CommonText",
+      "Arguments": {
+        "Position": [230, 300],
+        "Text": "Levels",
+        "Color": "white"
+      }
+    },
+   "CompaignBackground": {
+      "Type": "MenuScreen",
+      "Arguments": {
+        "Position": [0, 0]
+      }
+    },
+    "JoinRoom": {
+      "Type": "CommonScene",
+      "Arguments": {
+        "Game_objects": ["JoinRoomCamera", "JoinRoomText", "JoinRoomText", "JoinRoomBackground"],
+        "Is_online_mode": false,
+        "Current_camera_name": "JoinRoomCamera"
+      }
+    },
+    "JoinRoomCamera": {
+      "Type": "CommonCamera",
+      "Arguments": {
+        "Position": [0, 0],
+        "Mode": "Static",
+        "Targeting_position": [0, 0]
+      }
+    },
+   "JoinRoomText": {
+      "Type": "CommonText",
+      "Arguments": {
+        "Position": [400, 300],
+        "Text": "Server don't work",
+        "Color": "white"
+      }
+    },
+   "JoinRoomBackground": {
+      "Type": "MenuScreen",
+      "Arguments": {
+        "Position": [0, 0]
+      }
+    },
+   "CreateRoom": {
+      "Type": "CommonScene",
+      "Arguments": {
+        "Game_objects": ["CreateRoomCamera", "CreateRoomText", "CreateRoomText", "CreateRoomBackground"],
+        "Is_online_mode": false,
+        "Current_camera_name": "CreateRoomCamera"
+      }
+    },
+    "CreateRoomCamera": {
+      "Type": "CommonCamera",
+      "Arguments": {
+        "Position": [0, 0],
+        "Mode": "Static",
+        "Targeting_position": [0, 0]
+      }
+    },
+   "CreateRoomText": {
+      "Type": "CommonText",
+      "Arguments": {
+        "Position": [400, 300],
+        "Text": "Server don't work",
+        "Color": "white"
+      }
+    },
+   "CreateRoomBackground": {
+      "Type": "MenuScreen",
+      "Arguments": {
+        "Position": [0, 0]
+      }
+    },
+   "Settings": {
+      "Type": "CommonScene",
+      "Arguments": {
+        "Game_objects": ["SettingsCamera", "SettingsBackground", "SettingsText"],
+        "Is_online_mode": false,
+        "Current_camera_name": "SettingsCamera"
+      }
+    },
+    "SettingsCamera": {
+      "Type": "CommonCamera",
+      "Arguments": {
+        "Position": [0, 0],
+        "Mode": "Static",
+        "Targeting_position": [0, 0]
+      }
+    },
+    "SettingsText": {
+      "Type": "CommonText",
+      "Arguments": {
+        "Position": [230, 300],
+        "Text": "Nickname: Player",
+        "Color": "white"
+      }
+    },
+    "SettingsBackground": {
+      "Type": "MenuScreen",
+      "Arguments": {
+        "Position": [0, 0]
+      }
+    },
+    "Levels": {
+      "Type": "CommonScene",
+      "Arguments": {
+        "Game_objects": ["LevelsCamera", "LevelsBackground", "LevelsButton1"],
+        "Is_online_mode": false,
+        "Current_camera_name": "LevelsCamera"
+      }
+    },
+    "LevelsCamera": {
+      "Type": "CommonCamera",
+      "Arguments": {
+        "Position": [0, 0],
+        "Mode": "Static",
+        "Targeting_position": [0, 0]
+      }
+    },
+    "LevelsButton1": {
+      "Type": "SquareButton",
+      "Arguments": {
+        "Position": [100, 100],
+        "Text": "1",
+        "Change_scene_to_index": 6
+      }
+    },
+   "LevelsBackground": {
+      "Type": "MenuScreen",
+      "Arguments": {
+        "Position": [0, 0]
+      }
+    },
+    "Level1": {
+      "Type": "CommonScene",
+      "Arguments": {
+        "Game_objects": ["Level1Player", "Level1Player_fov", "A_Level1MapWorld", "Level1JoyStickForSmartphones"],
+        "Player_game_object_name": "Level1Player",
+        "Player_controller_game_object_name": {"Android": "Level1JoyStickForSmartphones", "IOS": "Level1JoyStickForSmartphones", "Windows": "Level1JoyStickForSmartphones", "Linux": "Level1JoyStickForSmartphones"},
+        "Current_camera_name": "Level1Player_fov",
+        "Is_online_mode": false
+      }
+    },
+    "Level1Player": {
+      "Type": "Player",
+      "Arguments": {
+        "Position": [350, 350]
+      }
+    },
+    "Level1Player_fov": {
+      "Type": "CommonCamera",
+      "Arguments": {
+        "Position": [0, 0],
+        "Mode": "Focus_at_game_object",
+        "Target_game_object_name": "Level1Player"
+      }
+    },
+    "A_Level1MapWorld": {
+      "Type": "CommonTilemap",
+      "Arguments": {
+        "Position": [0, 0],
+        "TileMap_name": "World"
+      }
+    },
+    "Level1JoyStickForSmartphones": {
+      "Type": "CommonJoyStick",
+      "Arguments": {
+        "Position": [200, 600],
+        "Color": "black",
+        "Radius": 100,
+        "Border_radius": 10,
+        "Touching_zone_box": [0, 0, 500, 768],
+        "Is_only_for_smartphones": true
+      }
+    },
+    "Room": {
+      "Type": "CommonScene",
+      "Arguments": {
+        "Game_objects": ["Block", "Player_fov", "A_MapWorld", "JoyStickForSmartphones", "KeyBoardForComputers", "FpsCounter", "OnlineModeViewer"],
+        "Player_controller_game_object_name": {"Android": "JoyStickForSmartphones", "IOS": "JoyStickForSmartphones", "Windows": "KeyBoardForComputers", "Linux": "KeyBoardForComputers"},
+        "Is_online_mode": true
       }
     },
     "Block": {
       "Type": "Grass",
       "Arguments": {
-        "Position": [600, 0]
-      }
-    },
-    "Player": {
-      "Type": "PeaShooter",
-      "Arguments": {
-        "Position": [600, 100],
-        "Speed": 200
+        "Position": [300, 300]
       }
     },
     "Player_fov": {
@@ -26,7 +265,7 @@
       "Arguments": {
         "Position": [0, 0],
         "Mode": "Focus_at_game_object",
-        "Target_game_object_name": "Player"
+        "Target_game_object_name": "Block"
       }
     },
     "A_MapWorld": {
@@ -44,8 +283,30 @@
         "Radius": 100,
         "Border_radius": 10,
         "Touching_zone_box": [0, 0, 500, 768],
+        "Is_only_for_smartphones": true
+      }
+    },
+    "KeyBoardForComputers": {
+      "Type": "CommonKeyBoard",
+      "Arguments": {
+        "Position": [0, 0],
+        "Hot_keys": {
+          "PLAYER_UP": "W"
+        },
         "Is_only_for_smartphones": false
+      }
+    },
+    "FpsCounter": {
+      "Type": "CommonFpsCounter",
+      "Arguments": {
+        "Position": [0, 0]
+      }
+    },
+    "OnlineModeViewer": {
+      "Type": "CommonOnlineModeViewer",
+      "Arguments": {
+        "Position": [0, 50]
       }
     }
   }
-}
+  }
