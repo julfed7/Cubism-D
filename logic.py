@@ -511,4 +511,144 @@ class TileMap(GameObject):
                 chunk_y = chunk_id//self.map_of_chunks_size*cls.chunk_size*cls.tile_size
                 screen.blit(chunk_image, [chunk_x+self.rect.x, chunk_y+self.rect.y])
 
-    def update(self, delta_
+    def update(self, delta_time, changed_virtual_screen_position):
+        super().update(delta_time, changed_virtual_screen_position)
+
+class JoyStick(GameObject):
+	def __init__(self, *args):
+		super().__init__(*args)
+		self.color = None
+		self.radius = None
+		self.border_radius = None
+		self.default_position = None
+		self.mouse_pressed = False
+		self.touching_zone_box = None
+		self.direction = [0, 0]
+		self.stick_position = None
+	def setup(self, *args):
+		super().setup(*args)
+		self.default_position = self.position
+		self.stick_position = self.position
+	def draw(self, *args):
+		pygame.draw.circle(self.scene.game.screen, self.color, [self.position[0], self.position[1]], self.radius, self.border_radius)
+		pygame.draw.circle(self.scene.game.screen, self.color, [self.stick_position[0], self.stick_position[1]], self.radius/2)
+	def update(self, *args):
+		super().update(*args)
+		mouse_position = self.scene.game.get_mouse_pos()
+		if pygame.mouse.get_pressed()[0] and ((mouse_position[0] >= self.touching_zone_box[0] and mouse_position[0] <= self.touching_zone_box[0]+self.touching_zone_box[2] and mouse_position[1] >= self.touching_zone_box[1] and mouse_position[1] <= self.touching_zone_box[1]+self.touching_zone_box[3]) if not self.mouse_pressed else True):
+				if not self.mouse_pressed:
+					self.position = [mouse_position[0], mouse_position[1]]
+					self.mouse_pressed = True
+				angle = math.atan2(mouse_position[1]-self.position[1], mouse_position[0]-self.position[0])
+				vector_x = math.cos(angle)
+				vector_y = math.sin(angle)
+				lenght = math.sqrt((self.position[0]-mouse_position[0])**2+(self.position[1]-mouse_position[1])**2)
+				if lenght > self.radius:
+					lenght = self.radius
+				self.stick_position = [self.position[0]+vector_x*lenght, self.position[1]+vector_y*lenght]
+				self.direction = [vector_x, vector_y]
+		else:
+			self.position = self.default_position
+			self.stick_position = self.position
+			self.direction = [0, 0]
+			self.mouse_pressed = False
+
+class KeyBoard(GameObject):
+	def __init__(self, *args):
+		super().__init__(*args)
+		self.direction = [0, 0]
+		self.keys_data_base = {
+			"ESCAPE": pygame.K_ESCAPE,
+			"W": pygame.K_w,
+			"A": pygame.K_a,
+			"S": pygame.K_w,
+			"D": pygame.K_w
+		}
+		self.hot_keys_data_base = {
+			"PLAYER_UP": None,
+			"PLAYER_DOWN": None,
+			"PLAYER_LEFT": None,
+			"PLAYER_RIGHT": None
+		}
+		self.hot_keys = {}
+	def setup(self, *args):
+		super().setup(*args)
+		for hot_key_name in self.hot_keys:
+			self.hot_keys_data_base[hot_key_name] = self.keys_data_base[self.hot_keys[hot_key_name]]
+	def update(self, *args):
+		super().update(*args)
+		keys = pygame.key.get_pressed()
+		if self.hot_keys_data_base["PLAYER_UP"]:
+		                  if keys[self.hot_keys_data_base["PLAYER_UP"]]:
+		                  	self.direction[1] = 1
+                    
+	
+class FpsCounter(GameObject):
+	def __init__(self, *args):
+		super().__init__(*args)
+		self.font = pygame.font.SysFont("Ariel", 50)
+		self.last_time = 0
+		self.fps = 0
+		self.last_ticks = self.ticks
+	def draw(self, *args):
+		text = self.font.render(str(self.fps), "black", True)
+		current_time = time.time()
+		if current_time - self.last_time >= 1:
+			self.fps = (self.ticks-self.last_ticks)//(current_time - self.last_time)
+			self.last_time = current_time
+			self.last_ticks = self.ticks
+		self.scene.game.screen.blit(text, [self.position[0], self.position[1]])
+
+class OnlineModeViewer(GameObject):
+	def __init__(self, *args):
+		super().__init__(*args)
+		self.font = pygame.font.SysFont("Ariel", 50)
+	def draw(self, *args):
+		text = self.font.render(str(self.scene.game.is_online_mode), "black", True)
+		self.scene.game.screen.blit(text, [self.position[0], self.position[1]])
+		
+class Button(GameObject):
+	def __init__(self, *args):
+		super().__init__(*args)
+		self.width = 0
+		self.height = 0
+		self.text = ""
+		self.function = None
+		self.color = None
+		self.border_color = None
+		self.border_radius = 0
+		self.change_scene_to_index = None
+		self.font = None
+		self.rendered_text = None
+		self.rendered_text_size = None
+	def setup(self, *args):
+		super().setup(*args)
+		self.function = self.scene.game.change_current_scene
+		self.rect = pygame.Rect(self.position[0], self.position[1], self.width, self.height)
+		self.font = pygame.font.SysFont("Ariel", self.width//(len(self.text)+1))
+		self.rendered_text = self.font.render(self.text, self.border_color, True)
+		self.rendered_text_size = self.rendered_text.get_size()
+	def draw(self, *args):
+		pygame.draw.rect(self.scene.game.screen, self.color, self.rect)
+		pygame.draw.rect(self.scene.game.screen, self.border_color, self.rect, self.border_radius)
+		self.scene.game.screen.blit(self.rendered_text, [self.position[0]+self.width/2-self.rendered_text_size[0]/2, self.position[1]+self.height/2-self.rendered_text_size[1]/2])
+	def update(self, *args):
+		mouse_pos = self.scene.game.get_mouse_pos()
+		if pygame.mouse.get_pressed()[0] and self.rect.collidepoint(mouse_pos):
+			self.function(self.change_scene_to_index)
+			
+class Text(GameObject):
+	def __init__(self, *args):
+		super().__init__(*args)
+		self.text = ""
+		self.color = None
+		self.font = None
+		self.rendered_text = None
+		self.rendered_text_size = None
+	def setup(self, *args):
+		super().setup(*args)
+		self.font = pygame.font.SysFont("Ariel", self.scene.game.TILE_SIZE//len(self.text)*self.scene.game.TILE_SIZE)
+		self.rendered_text = self.font.render(self.text, self.color, True)
+		self.rendered_text_size = self.rendered_text.get_size()
+	def draw(self, *args):
+		self.scene.game.screen.blit(self.rendered_text, [self.position[0]+self.rendered_text_size[0]/2-self.rendered_text_size[0]/2, self.position[1]+self.rendered_text_size[1]/2-self.rendered_text_size[1]/2])
