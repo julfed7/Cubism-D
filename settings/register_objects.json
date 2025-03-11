@@ -2,11 +2,21 @@
   "Register_objects": {
     "PeaShooter": {
       "Type": "Entity",
-      "Animation_name": "PeaShooter"
+      "Animation_name": "PeaShooter",
+      "Speed": 50
     },
     "Grass": {
       "Type": "Wall",
       "Animation_name": "Grass"
+    },
+    "Player": {
+      "Type": "Entity",
+      "Animation_name": "Player",
+      "Speed": 150
+    },
+    "MenuScreen": {
+      "Type": "Wall",
+      "Animation_name": "Menu_screen"
     },
     "CommonScene": {
       "Type": "Scene"
@@ -21,6 +31,40 @@
     },
     "CommonJoyStick": {
       "Type": "JoyStick",
+      "Animation_name": "Camera"
+    },
+    "CommonKeyBoard": {
+      "Type": "KeyBoard",
+      "Animation_name": "Camera"
+    },
+    "CommonFpsCounter": {
+      "Type": "FpsCounter",
+      "Animation_name": "Camera"
+    },
+    "CommonOnlineModeViewer": {
+      "Type": "OnlineModeViewer",
+      "Animation_name": "Camera"
+    },
+    "CommonButton": {
+      "Type": "Button",
+      "Animation_name": "Camera",
+      "Width": 350,
+      "Height": 100,
+      "Color": "white",
+      "Border_color": "black",
+      "Border_radius": 10
+    },
+    "SquareButton": {
+      "Type": "Button",
+      "Animation_name": "Camera",
+      "Width": 150,
+      "Height": 150,
+      "Color": "white",
+      "Border_color": "black",
+      "Border_radius": 10
+    },
+    "CommonText": {
+      "Type": "Text",
       "Animation_name": "Camera"
     }
   }
