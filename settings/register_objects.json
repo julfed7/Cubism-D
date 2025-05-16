@@ -3,7 +3,7 @@
     "PeaShooter": {
       "Type": "Entity",
       "Animation_name": "PeaShooter",
-      "Speed": 50
+      "Speed": 200
     },
     "Grass": {
       "Type": "Wall",
@@ -12,7 +12,7 @@
     "Player": {
       "Type": "Entity",
       "Animation_name": "Player",
-      "Speed": 150
+      "Speed": 200
     },
     "MenuScreen": {
       "Type": "Wall",
@@ -38,12 +38,16 @@
       "Animation_name": "Camera"
     },
     "CommonFpsCounter": {
-      "Type": "FpsCounter",
-      "Animation_name": "Camera"
+      "Type": "Text",
+      "Animation_name": "Camera",
+      "Mode": "FpsCounter",
+      "Size": 15
     },
     "CommonOnlineModeViewer": {
-      "Type": "OnlineModeViewer",
-      "Animation_name": "Camera"
+      "Type": "Text",
+      "Animation_name": "Camera",
+      "Mode": "OnlineModeViewer",
+      "Size": 15
     },
     "CommonButton": {
       "Type": "Button",
@@ -66,6 +70,23 @@
     "CommonText": {
       "Type": "Text",
       "Animation_name": "Camera"
+    },
+    "SmallText": {
+      "Type": "Text",
+      "Animation_name": "Camera",
+      "Size": 15
+    },
+    "BlackIntro": {
+      "Type": "Intro",
+      "Animation_name": "Camera",
+      "Color": "black"
+    },
+    "CommonCoin": {
+      "Type": "Entity",
+      "Animation_name": "Coin",
+      "Mode": "Coin",
+      "Teleport_zone": [0, 1250, 0, 1250],
+      "Animation_is_alpha": true
     }
   }
 }

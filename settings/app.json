@@ -1,49 +1,29 @@
 {
 
-
-
   "App": {
-
-
 
     "Title": "Cubism D",
 
-
-
     "FPS": 60,
-
-
 
     "Width": 1366,
 
-
-
     "Height": 768,
 
-
-
-    "Chunk_size": 1,
-
-
+    "Chunk_size": 25,
 
     "Tile_size": 50,
 
+    "Chunk_distance_fov": 1,
 
+    "Game_objects_render_distance": 684,
 
     "Player_game_object_name": "Player",
 
-
-
     "Camera_game_object_name": "Player_fov",
-
-
 
     "IP": ["localhost", 21124]
 
-
-
   }
-
-
 
 }

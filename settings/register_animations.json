@@ -9,25 +9,31 @@
     "Grass": {
       "Default": {
         "Frames": 1,
-        "Ticks": [60]
+        "Ticks": [3600]
       }
     },
     "Camera": {
       "Default": {
         "Frames": 1,
-        "Ticks": [60]
+        "Ticks": [3600]
       }
     },
     "Menu_screen": {
       "Default": {
         "Frames": 1,
-        "Ticks": [60]
+        "Ticks": [3600]
       }
     },
     "Player": {
       "Default": {
         "Frames": 1,
-        "Ticks": [60]
+        "Ticks": [3600]
+      }
+    },
+    "Coin": {
+      "Default": {
+        "Frames": 1,
+        "Ticks": [3600]
       }
     }
   }

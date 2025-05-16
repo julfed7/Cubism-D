@@ -3,12 +3,12 @@
     "Menu": {
       "Type": "CommonScene",
       "Arguments": {
-        "Game_objects": ["MenuCamera", "MenuBackground","MenuButtonCompaign","MenuButtonJoinRoom","MenuButtonCreateRoom","MenuButtonSettings"],
+        "Game_objects": ["MenuCamera", "MenuBackground","MenuButtonCompaign","MenuButtonJoinRoom","MenuButtonCreateRoom","MenuButtonSettings", "MenuVersion", "Z_MenuIntro", "MenuOtherCamera"],
         "Is_online_mode": false,
         "Current_camera_name": "MenuCamera"
       }
     },
-    "MenuCamera": {
+    "MenuOtherCamera": {
       "Type": "CommonCamera",
       "Arguments": {
         "Position": [0, 0],
@@ -16,12 +16,20 @@
         "Targeting_position": [0, 0]
       }
     },
+    "MenuCamera": {
+      "Type": "CommonCamera",
+      "Arguments": {
+        "Position": [0, 0],
+        "Mode": "Focus_at_game_object",
+        "Targeting_game_object_name": "MenuOtherCamera"
+      }
+    },
     "MenuButtonCompaign": {
       "Type": "CommonButton",
       "Arguments": {
         "Position": [509, 100],
         "Text": "Compaign",
-        "Change_scene_to_index": 5
+        "Change_scene_to_index": 1
       }
     },
     "MenuButtonJoinRoom": {
@@ -54,10 +62,23 @@
         "Position": [0, 0]
       }
     },
+    "MenuVersion": {
+      "Type": "SmallText",
+      "Arguments": {
+        "Position": [0, 740],
+        "Text": "1.0.1"
+      }
+    },
+    "Z_MenuIntro": {
+      "Type": "BlackIntro",
+      "Arguments": {
+        "Position": [0, 0]
+      }
+    },
     "Compaign": {
       "Type": "CommonScene",
       "Arguments": {
-        "Game_objects": ["CompaignCamera", "CompaignText", "CompaignText", "CompaignBackground"],
+        "Game_objects": ["CompaignCamera", "CompaignText", "CompaignText","CompaignButton","CompaignButtonLevel1","CompaignButtonLevel2", "CompaignBackground"],
         "Is_online_mode": false,
         "Current_camera_name": "CompaignCamera"
       }
@@ -73,9 +94,34 @@
    "CompaignText": {
       "Type": "CommonText",
       "Arguments": {
-        "Position": [230, 300],
+        "Position": [550, 0],
         "Text": "Levels",
-        "Color": "white"
+        "Color": "white",
+        "Size": 25
+      }
+    },
+    "CompaignButton": {
+      "Type": "SquareButton",
+      "Arguments": {
+        "Position": [0, 0],
+        "Text": "<-",
+        "Change_scene_to_index": 0
+      }
+    },
+    "CompaignButtonLevel1": {
+      "Type": "SquareButton",
+      "Arguments": {
+        "Position": [150, 150],
+        "Text": "1",
+        "Change_scene_to_index": 5
+      }
+    },
+    "CompaignButtonLevel2": {
+      "Type": "SquareButton",
+      "Arguments": {
+        "Position": [450, 150],
+        "Text": "2",
+        "Change_scene_to_index": 6
       }
     },
    "CompaignBackground": {
@@ -87,9 +133,17 @@
     "JoinRoom": {
       "Type": "CommonScene",
       "Arguments": {
-        "Game_objects": ["JoinRoomCamera", "JoinRoomText", "JoinRoomText", "JoinRoomBackground"],
+        "Game_objects": ["JoinRoomCamera", "JoinRoomText", "JoinRoomText","JoinRoomButton", "JoinRoomBackground"],
         "Is_online_mode": false,
         "Current_camera_name": "JoinRoomCamera"
+      }
+    },
+    "JoinRoomButton": {
+      "Type": "SquareButton",
+      "Arguments": {
+        "Position": [0, 0],
+        "Text": "<-",
+        "Change_scene_to_index": 0
       }
     },
     "JoinRoomCamera": {
@@ -104,7 +158,7 @@
       "Type": "CommonText",
       "Arguments": {
         "Position": [400, 300],
-        "Text": "Server don't work",
+        "Text": "Server in github.",
         "Color": "white"
       }
     },
@@ -117,9 +171,17 @@
    "CreateRoom": {
       "Type": "CommonScene",
       "Arguments": {
-        "Game_objects": ["CreateRoomCamera", "CreateRoomText", "CreateRoomText", "CreateRoomBackground"],
+        "Game_objects": ["CreateRoomCamera", "CreateRoomText", "CreateRoomText","CreateRoomButton", "CreateRoomBackground"],
         "Is_online_mode": false,
         "Current_camera_name": "CreateRoomCamera"
+      }
+    },
+    "CreateRoomButton": {
+      "Type": "SquareButton",
+      "Arguments": {
+        "Position": [0, 0],
+        "Text": "<-",
+        "Change_scene_to_index": 0
       }
     },
     "CreateRoomCamera": {
@@ -134,7 +196,7 @@
       "Type": "CommonText",
       "Arguments": {
         "Position": [400, 300],
-        "Text": "Server don't work",
+        "Text": "Server in github.",
         "Color": "white"
       }
     },
@@ -147,9 +209,17 @@
    "Settings": {
       "Type": "CommonScene",
       "Arguments": {
-        "Game_objects": ["SettingsCamera", "SettingsBackground", "SettingsText"],
+        "Game_objects": ["SettingsCamera", "SettingsBackground", "SettingsText", "SettingsButton"],
         "Is_online_mode": false,
         "Current_camera_name": "SettingsCamera"
+      }
+    },
+    "SettingsButton": {
+      "Type": "SquareButton",
+      "Arguments": {
+        "Position": [0, 0],
+        "Text": "<-",
+        "Change_scene_to_index": 0
       }
     },
     "SettingsCamera": {
@@ -174,50 +244,35 @@
         "Position": [0, 0]
       }
     },
-    "Levels": {
-      "Type": "CommonScene",
-      "Arguments": {
-        "Game_objects": ["LevelsCamera", "LevelsBackground", "LevelsButton1"],
-        "Is_online_mode": false,
-        "Current_camera_name": "LevelsCamera"
-      }
-    },
-    "LevelsCamera": {
-      "Type": "CommonCamera",
-      "Arguments": {
-        "Position": [0, 0],
-        "Mode": "Static",
-        "Targeting_position": [0, 0]
-      }
-    },
-    "LevelsButton1": {
-      "Type": "SquareButton",
-      "Arguments": {
-        "Position": [100, 100],
-        "Text": "1",
-        "Change_scene_to_index": 6
-      }
-    },
-   "LevelsBackground": {
-      "Type": "MenuScreen",
-      "Arguments": {
-        "Position": [0, 0]
-      }
-    },
     "Level1": {
       "Type": "CommonScene",
       "Arguments": {
-        "Game_objects": ["Level1Player", "Level1Player_fov", "A_Level1MapWorld", "Level1JoyStickForSmartphones"],
+        "Game_objects": ["Level1Player", "Level1Player_fov", "Level1JoyStickForSmartphones", "Level1FpsCounter", "A_Level1MapWorld", "Level1Button", "Level1Coin"],
         "Player_game_object_name": "Level1Player",
         "Player_controller_game_object_name": {"Android": "Level1JoyStickForSmartphones", "IOS": "Level1JoyStickForSmartphones", "Windows": "Level1JoyStickForSmartphones", "Linux": "Level1JoyStickForSmartphones"},
         "Current_camera_name": "Level1Player_fov",
-        "Is_online_mode": false
+        "Is_online_mode": false,
+        "Tilemap_name": "A_Level1MapWorld"
+      }
+    },
+    "Level1Coin": {
+      "Type": "CommonCoin",
+      "Arguments": {
+        "Position": [625, 625]
+      }
+    },
+    "Level1Button": {
+      "Type": "SquareButton",
+      "Arguments": {
+        "Position": [1216, 0],
+        "Text": "Exit",
+        "Change_scene_to_index": 0
       }
     },
     "Level1Player": {
       "Type": "Player",
       "Arguments": {
-        "Position": [350, 350]
+        "Position": [0, 0]
       }
     },
     "Level1Player_fov": {
@@ -225,14 +280,15 @@
       "Arguments": {
         "Position": [0, 0],
         "Mode": "Focus_at_game_object",
-        "Target_game_object_name": "Level1Player"
+        "Target_game_object_name": "Level1Player",
+        "Focus_zone": [658, 359, 50, 50]
       }
     },
     "A_Level1MapWorld": {
       "Type": "CommonTilemap",
       "Arguments": {
         "Position": [0, 0],
-        "TileMap_name": "World"
+        "TileMap_name": "Sandbox"
       }
     },
     "Level1JoyStickForSmartphones": {
@@ -246,6 +302,12 @@
         "Is_only_for_smartphones": true
       }
     },
+    "Level1FpsCounter": {
+      "Type": "CommonFpsCounter",
+      "Arguments": {
+        "Position": [0, 0]
+      }
+    },
     "Room": {
       "Type": "CommonScene",
       "Arguments": {
@@ -257,7 +319,7 @@
     "Block": {
       "Type": "Grass",
       "Arguments": {
-        "Position": [300, 300]
+        "Position": [0, 0]
       }
     },
     "Player_fov": {
@@ -272,7 +334,7 @@
       "Type": "CommonTilemap",
       "Arguments": {
         "Position": [0, 0],
-        "TileMap_name": "World"
+        "TileMap_name": "Sandbox"
       }
     },
     "JoyStickForSmartphones": {
@@ -309,4 +371,4 @@
       }
     }
   }
-  }
+}
