@@ -1,11 +1,3 @@
-import time
-import pygame
-import copy
-import utils
-import logic
-import asyncio
-
-
 # /// script
 # dependencies = [
 #  "pygame",
@@ -31,6 +23,8 @@ async def main():
 	
 	CONFIG_SETUP_FILE_NAME = "setup.json"
 	
+	import utils
+	
 	config = utils.read_file(utils.path(PATH_TO_FOLDER_WHERE_SETTINGS+"/"+CONFIG_APP_FILE_NAME, ENVIRONMENT_OS))
 	
 	TITLE = config["App"]["Title"]
@@ -45,6 +39,10 @@ async def main():
 	
 	TILE_SIZE = config["App"]["Tile_size"]
 	
+	CHUNK_DISTANCE_FOV = config["App"]["Chunk_distance_fov"]
+	
+	GAME_OBJECTS_RENDER_DISTANCE = config["App"]["Game_objects_render_distance"]
+	
 	PLAYER_GAME_OBJECT_NAME = config["App"]["Player_game_object_name"]
 	
 	CAMERA_GAME_OBJECT_NAME = config["App"]["Camera_game_object_name"]
@@ -54,17 +52,25 @@ async def main():
 	
 	ticks = 0
 	
+	import time
+	
 	last_time = time.time()
 	delta_time = last_time/1000
 	
 	last_screen_orientation = "Landscape"
 	screen_orientation = "Landscape"
 	
-	is_running = True
+	is_running = 1
+	
+	changed_virtual_screen = None
+	
+	changed_virtual_screen_position = None
+	
+	import pygame
 	
 	pygame.init()
 	
-	screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+	screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN|pygame.DOUBLEBUF, 1)
 	
 	virtual_screen = pygame.Surface((WIDTH, HEIGHT))
 	
@@ -74,6 +80,9 @@ async def main():
 	
 	pygame.display.set_icon(icon_image)
 	
+	clock = pygame.time.Clock()
+	
+	import logic
 	
 	config_animations = utils.read_file(utils.path("settings/register_animations.json", ENVIRONMENT_OS))
 	
@@ -92,7 +101,7 @@ async def main():
 	screen_size = screen.get_size()
 	
 	game = logic.Game()
-	game.setup(virtual_screen, virtual_screen.get_size(), ENVIRONMENT_OS, TILE_SIZE, IP)
+	game.setup(virtual_screen, virtual_screen.get_size(), ENVIRONMENT_OS, TILE_SIZE, IP, CHUNK_DISTANCE_FOV, clock, GAME_OBJECTS_RENDER_DISTANCE)
 	
 	register_objects_info = utils.read_file(utils.path("settings/register_objects.json", ENVIRONMENT_OS))
 	
@@ -105,10 +114,10 @@ async def main():
 	  "Camera": logic.Camera,
 	  "TileMap": logic.TileMap,
 	  "JoyStick": logic.JoyStick,
-	  "FpsCounter": logic.FpsCounter,
 	  "KeyBoard": logic.KeyBoard,
-	  "OnlineModeViewer": logic.OnlineModeViewer,  "Button": logic.Button,
-	  "Text": logic.Text
+	  "Button": logic.Button,
+	  "Text": logic.Text,
+	  "Intro": logic.Intro
 	}
 	
 	game_object_types = {}
@@ -128,6 +137,8 @@ async def main():
 	setattr(logic.TileMap, "game_object_types", game_object_types)
 	setattr(game, "game_object_types", game_object_types)
 	setattr(logic.TileMap, "register_objects_info", register_objects_info)
+	
+	import copy
 	
 	registered_game_objects = []
 	
@@ -179,19 +190,20 @@ async def main():
 		scene.setup()
 	
 		game.add_scene(scene)
-
-
+		
+	pygame.event.set_allowed([pygame.QUIT, pygame.KEYUP])
 
 	while is_running:
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
-				is_running = False
+				is_running = 0
 			elif event.type == pygame.KEYUP:
 				if event.key == pygame.K_ESCAPE:
-					is_running = False
+					is_running = 0
+		
+		
 	
 		#Window
-		screen_size = screen.get_size()
 	
 		last_screen_orientation = screen_orientation
 	
@@ -199,33 +211,36 @@ async def main():
 			screen_orientation = "Landscape"
 		else:
 			screen_orientation = "Portret"
-	
-		if screen_orientation != last_screen_orientation:
-			screen.fill((0, 0, 0))
-	
-		if screen_orientation == "Landscape":
-			size = (screen_size[1]/HEIGHT*WIDTH, screen_size[1])
-		elif screen_orientation == "Portret":
-			size = (screen_size[0], screen_size[0]/WIDTH*HEIGHT)
+			
+		if ticks % 60 == 0:
+			if screen_orientation == "Landscape":
+				size = (screen_size[1]/HEIGHT*WIDTH, screen_size[1])
+			elif screen_orientation == "Portret":
+				size = (screen_size[0], screen_size[0]/WIDTH*HEIGHT)
+				
+			if screen_orientation != last_screen_orientation:
+				screen.fill((0, 0, 0))
+				
+			screen_size = screen.get_size()
+			
+			changed_virtual_screen_position = (screen_size[0]/2-size[0]/2, screen_size[1]/2-size[1]/2)
 	
 		changed_virtual_screen = pygame.transform.scale(virtual_screen, size)
-	
-		changed_virtual_screen_position = (screen_size[0]/2-size[0]/2, screen_size[1]/2-size[1]/2)
 	
 		game.changed_virtual_screen_position = changed_virtual_screen_position
 	
 		game.screen_size = screen_size
+		
+		
 	
 		screen.blit(changed_virtual_screen, changed_virtual_screen_position)
 	
 		#Draw
 		virtual_screen.fill((255, 255, 255))
 	
-		game.render()
-	
-		#Update
+		#Moving game
 		game.tick(delta_time, changed_virtual_screen_position)
-	
+		
 		pygame.display.flip()
 	
 		#FPS
@@ -234,16 +249,13 @@ async def main():
 		delta_time = time.time()-last_time
 	
 		last_time = time.time()
-	
-		sleep_time = 1/FPS - delta_time
-	
-		if sleep_time <= 0:
-			sleep_time = 0
-	
-		time.sleep(sleep_time)
+		
+		clock.tick(FPS)
 		
 		await asyncio.sleep(0)
 	
 	pygame.quit()
-	
+
+import asyncio
+
 asyncio.run(main())
