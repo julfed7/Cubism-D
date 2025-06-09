@@ -10,11 +10,11 @@
 
     "Height": 768,
 
-    "Chunk_size": 25,
+    "Chunk_size": 5,
 
     "Tile_size": 50,
 
-    "Chunk_distance_fov": 1,
+    "Chunk_distance_fov": 3,
 
     "Game_objects_render_distance": 684,
 

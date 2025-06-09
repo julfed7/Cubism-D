@@ -247,9 +247,9 @@
     "Level1": {
       "Type": "CommonScene",
       "Arguments": {
-        "Game_objects": ["Level1Player", "Level1Player_fov", "Level1JoyStickForSmartphones", "Level1FpsCounter", "A_Level1MapWorld", "Level1Button", "Level1Coin"],
+        "Game_objects": ["Level1Player", "Level1Player_fov", "Level1Input", "Level1FpsCounter", "A_Level1MapWorld", "Level1Button", "Level1Coin"],
         "Player_game_object_name": "Level1Player",
-        "Player_controller_game_object_name": {"Android": "Level1JoyStickForSmartphones", "IOS": "Level1JoyStickForSmartphones", "Windows": "Level1JoyStickForSmartphones", "Linux": "Level1JoyStickForSmartphones"},
+        "Player_controller_game_object_name": "Level1Input",
         "Current_camera_name": "Level1Player_fov",
         "Is_online_mode": false,
         "Tilemap_name": "A_Level1MapWorld"
@@ -291,15 +291,17 @@
         "TileMap_name": "Sandbox"
       }
     },
-    "Level1JoyStickForSmartphones": {
-      "Type": "CommonJoyStick",
+    "Level1Input": {
+      "Type": "CommonInput",
       "Arguments": {
         "Position": [200, 600],
         "Color": "black",
         "Radius": 100,
         "Border_radius": 10,
         "Touching_zone_box": [0, 0, 500, 768],
-        "Is_only_for_smartphones": true
+        "Hot_keys": {
+          "PLAYER_UP": "W"
+        }
       }
     },
     "Level1FpsCounter": {
@@ -311,9 +313,10 @@
     "Room": {
       "Type": "CommonScene",
       "Arguments": {
-        "Game_objects": ["Block", "Player_fov", "A_MapWorld", "JoyStickForSmartphones", "KeyBoardForComputers", "FpsCounter", "OnlineModeViewer"],
-        "Player_controller_game_object_name": {"Android": "JoyStickForSmartphones", "IOS": "JoyStickForSmartphones", "Windows": "KeyBoardForComputers", "Linux": "KeyBoardForComputers"},
-        "Is_online_mode": true
+        "Game_objects": ["Block", "Player_fov", "A_MapWorld", "Input", "KeyBoardForComputers", "FpsCounter", "OnlineModeViewer"],
+        "Player_controller_game_object_name": "Input",
+        "Is_online_mode": true,
+        "Tilemap_name": "A_MapWorld"
       }
     },
     "Block": {
@@ -337,8 +340,8 @@
         "TileMap_name": "Sandbox"
       }
     },
-    "JoyStickForSmartphones": {
-      "Type": "CommonJoyStick",
+    "Input": {
+      "Type": "CommonInput",
       "Arguments": {
         "Position": [200, 600],
         "Color": "black",
@@ -349,7 +352,7 @@
       }
     },
     "KeyBoardForComputers": {
-      "Type": "CommonKeyBoard",
+      "Type": "CommonInput",
       "Arguments": {
         "Position": [0, 0],
         "Hot_keys": {

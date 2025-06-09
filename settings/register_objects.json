@@ -7,7 +7,8 @@
     },
     "Grass": {
       "Type": "Wall",
-      "Animation_name": "Grass"
+      "Animation_name": "Grass",
+      "Not_animated": true
     },
     "Player": {
       "Type": "Entity",
@@ -19,39 +20,52 @@
       "Animation_name": "Menu_screen"
     },
     "CommonScene": {
-      "Type": "Scene"
+      "Type": "Scene",
+      "Not_animated": true
     },
     "CommonCamera": {
       "Type": "Camera",
-      "Animation_name": "Camera"
+      "Animation_name": "Camera",
+      "Not_animated": true
     },
     "CommonTilemap": {
       "Type": "TileMap",
-      "Animation_name": "Camera"
+      "Animation_name": "Camera",
+      "Not_animated": true
+    },
+    "CommonInput": {
+      "Type": "Input",
+      "Animation_name": "Camera",
+      "Not_animated": true
     },
     "CommonJoyStick": {
-      "Type": "JoyStick",
-      "Animation_name": "Camera"
+      "Type": "Input",
+      "Animation_name": "Camera",
+      "Not_animated": true
     },
     "CommonKeyBoard": {
-      "Type": "KeyBoard",
-      "Animation_name": "Camera"
+      "Type": "Input",
+      "Animation_name": "Camera",
+      "Not_animated": true
     },
     "CommonFpsCounter": {
       "Type": "Text",
       "Animation_name": "Camera",
+      "Not_animated": true,
       "Mode": "FpsCounter",
       "Size": 15
     },
     "CommonOnlineModeViewer": {
       "Type": "Text",
       "Animation_name": "Camera",
+      "Not_animated": true,
       "Mode": "OnlineModeViewer",
       "Size": 15
     },
     "CommonButton": {
       "Type": "Button",
       "Animation_name": "Camera",
+      "Not_animated": true,
       "Width": 350,
       "Height": 100,
       "Color": "white",
@@ -61,6 +75,7 @@
     "SquareButton": {
       "Type": "Button",
       "Animation_name": "Camera",
+      "Not_animated": true,
       "Width": 150,
       "Height": 150,
       "Color": "white",
@@ -69,21 +84,25 @@
     },
     "CommonText": {
       "Type": "Text",
-      "Animation_name": "Camera"
+      "Animation_name": "Camera",
+      "Not_animated": true
     },
     "SmallText": {
       "Type": "Text",
       "Animation_name": "Camera",
+      "Not_animated": true,
       "Size": 15
     },
     "BlackIntro": {
       "Type": "Intro",
       "Animation_name": "Camera",
+      "Not_animated": true,
       "Color": "black"
     },
     "CommonCoin": {
       "Type": "Entity",
       "Animation_name": "Coin",
+      "Not_animated": true,
       "Mode": "Coin",
       "Teleport_zone": [0, 1250, 0, 1250],
       "Animation_is_alpha": true
