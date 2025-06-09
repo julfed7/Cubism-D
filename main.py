@@ -1,8 +1,19 @@
+import utils
+import time
+import pygame
+import logic
+import copy
+import asyncio
+
+
+
 # /// script
 # dependencies = [
 #  "pygame",
 # ]
 # ///
+
+
 
 async def main():
 	ENVIRONMENT_OS = "Android"
@@ -23,7 +34,7 @@ async def main():
 	
 	CONFIG_SETUP_FILE_NAME = "setup.json"
 	
-	import utils
+	
 	
 	config = utils.read_file(utils.path(PATH_TO_FOLDER_WHERE_SETTINGS+"/"+CONFIG_APP_FILE_NAME, ENVIRONMENT_OS))
 	
@@ -52,7 +63,6 @@ async def main():
 	
 	ticks = 0
 	
-	import time
 	
 	last_time = time.time()
 	delta_time = last_time/1000
@@ -66,11 +76,11 @@ async def main():
 	
 	changed_virtual_screen_position = None
 	
-	import pygame
+	
 	
 	pygame.init()
 	
-	screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN|pygame.DOUBLEBUF, 1)
+	screen = pygame.display.set_mode((0,0), pygame.FULLSCREEN|pygame.DOUBLEBUF|pygame.HWSURFACE)
 	
 	virtual_screen = pygame.Surface((WIDTH, HEIGHT))
 	
@@ -82,7 +92,7 @@ async def main():
 	
 	clock = pygame.time.Clock()
 	
-	import logic
+	
 	
 	config_animations = utils.read_file(utils.path("settings/register_animations.json", ENVIRONMENT_OS))
 	
@@ -113,8 +123,9 @@ async def main():
 	  "Wall": logic.Wall,
 	  "Camera": logic.Camera,
 	  "TileMap": logic.TileMap,
-	  "JoyStick": logic.JoyStick,
-	  "KeyBoard": logic.KeyBoard,
+	  "Input": logic.Input,
+	  "KeyBoard": logic.Input,
+	  "JoyStick": logic.Input,
 	  "Button": logic.Button,
 	  "Text": logic.Text,
 	  "Intro": logic.Intro
@@ -138,7 +149,7 @@ async def main():
 	setattr(game, "game_object_types", game_object_types)
 	setattr(logic.TileMap, "register_objects_info", register_objects_info)
 	
-	import copy
+	
 	
 	registered_game_objects = []
 	
@@ -199,9 +210,7 @@ async def main():
 				is_running = 0
 			elif event.type == pygame.KEYUP:
 				if event.key == pygame.K_ESCAPE:
-					is_running = 0
-		
-		
+					is_running = 0		
 	
 		#Window
 	
@@ -241,6 +250,11 @@ async def main():
 		#Moving game
 		game.tick(delta_time, changed_virtual_screen_position)
 		
+		
+		changed_virtual_screen_size = changed_virtual_screen.get_size()
+		
+		#pygame.display.update([[rect.x+changed_virtual_screen_position[0],rect.y+changed_virtual_screen_position[1],rect.width,rect.height] for rect in game.draw_rects])
+		
 		pygame.display.flip()
 	
 		#FPS
@@ -253,9 +267,7 @@ async def main():
 		clock.tick(FPS)
 		
 		await asyncio.sleep(0)
-	
+	#tick(is_running, screen, virtual_screen, game, screen_orientation, screen_size, ticks, WIDTH, HEIGHT, delta_time, last_time, clock, FPS)
 	pygame.quit()
-
-import asyncio
 
 asyncio.run(main())
