@@ -29,7 +29,7 @@
       "Arguments": {
         "Position": [509, 100],
         "Text": "Compaign",
-        "Change_scene_to_index": 1
+        "Func_args": [1]
       }
     },
     "MenuButtonJoinRoom": {
@@ -37,7 +37,7 @@
       "Arguments": {
         "Position": [509, 250],
         "Text": "Join Room",
-        "Change_scene_to_index": 2
+        "Func_args": [2]
       }
     },
     "MenuButtonCreateRoom": {
@@ -45,7 +45,7 @@
       "Arguments": {
         "Position": [509, 400],
         "Text": "Create Room",
-        "Change_scene_to_index": 3
+        "Func_args": [3]
       }
     },
     "MenuButtonSettings": {
@@ -53,7 +53,7 @@
       "Arguments": {
         "Position": [509, 550],
         "Text": "Settings",
-        "Change_scene_to_index": 4
+        "Func_args": [4]
       }
     },
     "MenuBackground": {
@@ -105,7 +105,7 @@
       "Arguments": {
         "Position": [0, 0],
         "Text": "<-",
-        "Change_scene_to_index": 0
+        "Func_args": [0]
       }
     },
     "CompaignButtonLevel1": {
@@ -113,7 +113,7 @@
       "Arguments": {
         "Position": [150, 150],
         "Text": "1",
-        "Change_scene_to_index": 5
+        "Func_args": [5]
       }
     },
     "CompaignButtonLevel2": {
@@ -121,7 +121,7 @@
       "Arguments": {
         "Position": [450, 150],
         "Text": "2",
-        "Change_scene_to_index": 6
+        "Func_args": [6]
       }
     },
    "CompaignBackground": {
@@ -133,7 +133,7 @@
     "JoinRoom": {
       "Type": "CommonScene",
       "Arguments": {
-        "Game_objects": ["JoinRoomCamera", "JoinRoomText", "JoinRoomText","JoinRoomButton", "JoinRoomBackground"],
+        "Game_objects": ["JoinRoomCamera", "JoinRoomText", "JoinRoomText","JoinRoomButton", "JoinRoomBackground", "JoinRoomRoomLabel", "JoinRoomButtonUpdate"],
         "Is_online_mode": false,
         "Current_camera_name": "JoinRoomCamera"
       }
@@ -143,7 +143,7 @@
       "Arguments": {
         "Position": [0, 0],
         "Text": "<-",
-        "Change_scene_to_index": 0
+        "Func_args": [0]
       }
     },
     "JoinRoomCamera": {
@@ -157,22 +157,38 @@
    "JoinRoomText": {
       "Type": "CommonText",
       "Arguments": {
-        "Position": [400, 300],
-        "Text": "Server in github.",
-        "Color": "white"
+        "Position": [570, 0],
+        "Text": "Rooms",
+        "Color": "white",
+        "Size": 20
       }
     },
-   "JoinRoomBackground": {
+    "JoinRoomBackground": {
       "Type": "MenuScreen",
       "Arguments": {
         "Position": [0, 0]
       }
     },
+    "JoinRoomRoomLabel": {
+      "Type": "CommonRoomLabel",
+      "Arguments": {
+        "Position": [533, 259]
+      }
+   },
+   "JoinRoomButtonUpdate": {
+      "Type": "SquareButton",
+      "Arguments": {
+        "Position": [1008, 284],
+        "Text": "Update",
+        "Func_args": ["JoinRoomRoomLabel"],
+        "Func_name": "update_room_label"
+      }
+   },
    "CreateRoom": {
       "Type": "CommonScene",
       "Arguments": {
         "Game_objects": ["CreateRoomCamera", "CreateRoomText", "CreateRoomText","CreateRoomButton", "CreateRoomBackground"],
-        "Is_online_mode": false,
+        "Is_online_mode": true,
         "Current_camera_name": "CreateRoomCamera"
       }
     },
@@ -181,7 +197,7 @@
       "Arguments": {
         "Position": [0, 0],
         "Text": "<-",
-        "Change_scene_to_index": 0
+        "Func_args": [0]
       }
     },
     "CreateRoomCamera": {
@@ -192,21 +208,31 @@
         "Targeting_position": [0, 0]
       }
     },
-   "CreateRoomText": {
+    "CreateRoomText": {
       "Type": "CommonText",
       "Arguments": {
-        "Position": [400, 300],
-        "Text": "Server in github.",
-        "Color": "white"
+        "Position": [450, 0],
+        "Text": "Create Room",
+        "Color": "white",
+        "Size": 35
       }
     },
-   "CreateRoomBackground": {
+    "CreateRoomBackground": {
       "Type": "MenuScreen",
       "Arguments": {
         "Position": [0, 0]
       }
     },
-   "Settings": {
+    "CreateRoomButton": {
+      "Type": "SquareButton",
+      "Arguments": {
+        "Position": [608, 284],
+        "Text": "Create",
+        "Func_args": [],
+        "Func_name": "create_room"
+      }
+    },
+    "Settings": {
       "Type": "CommonScene",
       "Arguments": {
         "Game_objects": ["SettingsCamera", "SettingsBackground", "SettingsText", "SettingsButton"],
@@ -219,7 +245,7 @@
       "Arguments": {
         "Position": [0, 0],
         "Text": "<-",
-        "Change_scene_to_index": 0
+        "Func_args": [0]
       }
     },
     "SettingsCamera": {
@@ -266,7 +292,7 @@
       "Arguments": {
         "Position": [1216, 0],
         "Text": "Exit",
-        "Change_scene_to_index": 0
+        "Func_args": [0]
       }
     },
     "Level1Player": {
