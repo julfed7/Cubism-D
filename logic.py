@@ -67,89 +67,80 @@ class Game:
         self.screen.fill((255,255,255))
  
     def tick(self, delta_time, changed_virtual_screen_position):
+ 
         self.draw_rects = []
-        
-        self.current_event = []
         current_scene = self.get_scene()
         current_scene.tick(delta_time, changed_virtual_screen_position)
         if current_scene.is_online_mode:
         	self.is_online_mode = True
         else:
         	self.is_online_mode = False
-        
-        if self.is_online_mode:
-          	if self.itinerarium is None:
-          			try:
-          				self.itinerarium = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-          				self.itinerarium.setblocking(False)
-          				self.current_event.append(["New client", [True]])
-          				self.current_event.append(["Create room", ["Room"]])
-          				self.current_event.append(["Join room", ["Room"]])          				
-          			except ConnectionRefusedError:
-          				self.current_scene.is_online_mode = False
-          				self.is_online_mode = False
-          				
-          	if time.time() - self.last_packet_time > self.network_checking_time:
-          				#self.change_current_scene(0)
-          				self.last_packet_time = time.time()
-          				
-          	if self.ticks % 120 == 0:
-          		self.current_event.append(["Client alive", [True]])
-          		
-          	if self.current_event:
-          			try:
-	          			request = {"event_bus": self.current_event, "ticks": self.ticks}
-	          			packet = json.dumps(request)
-	          			data = packet.encode()
-	          			self.itinerarium.sendto(data, tuple(self.IP))
-	          		except BrokenPipeError:
-	          			current_scene.is_online_mode = False
-	          			self.is_online_mode = False
-          			
+     
+        if self.itinerarium is None:
           	try:
-          			data = self.itinerarium.recv(1024)
-          			packet = data.decode()
-          			start_slace = packet.find("{")
-          			end_slace = packet.find("}{")
-          			if end_slace == -1:
-          				end_slace = packet.rfind("}")
-          			packet = packet[start_slace:end_slace+1]
-          			if not packet:
-          				packet = "{}"
-          			else:
-          				response = json.loads(packet)
+          			self.itinerarium = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+          			self.itinerarium.setblocking(False)
+          			self.current_event.append(["New client", [True]])
+          	except ConnectionRefusedError:
+          			pass
           				
-          				self.last_packet_time = time.time()
+        if time.time() - self.last_packet_time > self.network_checking_time:
+          	#self.change_current_scene(0)
+          	self.last_packet_time = time.time()
           				
-          				if abs(self.ticks - response["ticks"]) > self.lagging_ticks:
-          					self.current_event.append(["Get condition of the room", [True]])
+        if self.ticks % 120 == 0:
+          	self.current_event.append(["Client alive", [True]])
+        if self.current_event != []:
+              try:
+              	request = {"event_bus": self.current_event, "ticks": self.ticks}
+              	packet = json.dumps(request)
+              	data = packet.encode()
+              	self.itinerarium.sendto(data, tuple(self.IP))
+              	self.current_event = []
+              except BrokenPipeError:
+              	pass
+        try:
+          	data = self.itinerarium.recv(1024)
+          	packet = data.decode()
+          	start_slace = packet.find("{")
+          	end_slace = packet.find("}{")
+          	if end_slace == -1:
+          			end_slace = packet.rfind("}")
+          	packet = packet[start_slace:end_slace+1]
+          	if not packet:
+          			packet = "{}"
+          	else:
+          			response = json.loads(packet)
+          	self.last_packet_time = time.time()
+          	
+          	if abs(self.ticks - response["ticks"]) > self.lagging_ticks:
+          				self.current_event.append(["Get condition of the room", [True]])
+          	
+          	for event in response["event_bus"]:
+          			event_name = event[0]
+          			event_data = event[1]
           				
+          			#print(event_name, event_data)
           				
-          				for event in response["event_bus"]:
-          					event_name = event[0]
-          					event_data = event[1]
-          					
-          					#print(event_name, event_data)
-          					
-          					if event_name == "Your ID":
-          						self.my_id = event_data[0]
-          					elif event_name == "Your player ID":
-          						current_scene.my_player_id = event_data[0]
-          					elif event_name == "Add game object":
-          						if event_data[0] == "Player":
-          							game_object = copy.copy(self.game_object_types["PeaShooter"])
-          							game_object.name = "Z"+str(event_data[1])
-          							game_object.id = event_data[1]
-          							game_object.position = event_data[2]
-          							game_object.scene = current_scene
-          							game_object.camera = current_scene.current_camera
-          							game_object.is_online_mode = True
-          							game_object.setup()
-          							current_scene.add_game_object(game_object)
-          					elif event_name == "Your condition of the room":
-          							self.ticks = response["ticks"]
-          							live_game_objects_names = []
-          							for game_object_data in event_data[0]["Game objects"]:
+          			if event_name == "Your ID":
+          				self.my_id = event_data[0]
+          			elif event_name == "Your player ID":
+          				current_scene.my_player_id = event_data[0]
+          			elif event_name == "Add game object":
+          				if event_data[0] == "Player":
+          						game_object = copy.copy(self.game_object_types["PeaShooter"])
+          						game_object.name = "Z"+str(event_data[1])
+          						game_object.id = event_data[1]
+          						game_object.position = event_data[2]
+          						game_object.scene = current_scene
+          						game_object.camera = current_scene.current_camera
+          						game_object.is_online_mode = True
+          						game_object.setup()
+          						current_scene.add_game_object(game_object)
+          			elif event_name == "Your condition of the room":
+          						self.ticks = response["ticks"]
+          						live_game_objects_names = []
+          						for game_object_data in event_data[0]["Game objects"]:
           								game_object_type = game_object_data[0]
           								game_object_name = "Z"+str(game_object_data[1])
           								game_object_id = game_object_data[1]
@@ -172,9 +163,16 @@ class Game:
           								for game_object in list(current_scene.game_objects.values()):
           									if game_object.is_online_mode and game_object.name not in live_game_objects_names:
           										current_scene.remove_game_object(game_object)
-          					elif event_name == "Game object moved":
+          			elif event_name == "Game object moved":
           						current_scene.game_objects["Z"+str(event_data[0])].position = event_data[1]
-          	except BlockingIOError and OSError:
+          			elif event_name == "Your rooms":
+          						count_buttons = len(event_data[0])
+          						room_label = current_scene.game_objects["JoinRoomRoomLabel"]
+          						if room_label.count_buttons != count_buttons:
+          							for i in range(count_buttons):
+          								room_label.create_button(event_data[0][i])
+          							room_label.count_buttons = count_buttons
+        except BlockingIOError and OSError:
           			pass
           			
         self.ticks += 1
@@ -201,6 +199,19 @@ class Game:
     def change_current_scene(self, index):
         self.current_scene = index
         #self.screen.fill((255,255,255))
+    
+    def join_room(self):
+        pass
+        
+    def create_room(self):
+        self.current_event.append(["Create room", [str(random.randint(1, 5))]])
+
+        self.change_current_scene(0)
+        
+    def update_room_label(self, room_label_name):
+        current_scene = self.get_scene()
+        current_scene.room_label = current_scene.game_objects[room_label_name]
+        self.current_event.append(["Get rooms", []])
         
     @property
     def scenes(self):
@@ -208,13 +219,15 @@ class Game:
 
 
 class Scene:
-    __slots__ = ["type", "name", "game_objects", "entities", "walls", "sprite_group", "game", "current_camera", "current_camera_name", "current_player_game_object", "player_game_object_name", "player_controller_game_object", "player_controller_game_object_name", "is_online_mode", "my_player_id", "tilemap_name", "tilemap", "not_animated", "camera"]
+    __slots__ = ["type", "name", "game_objects", "entities", "walls", "sprite_group", "game", "current_camera", "current_camera_name", "current_player_game_object", "player_game_object_name", "player_controller_game_object", "player_controller_game_object_name", "is_online_mode", "my_player_id", "tilemap_name", "tilemap", "not_animated", "camera", "game_objects_", "room_label_name", "room_label"]
     def __init__(self):        
         self.type = None
         
         self.name = None
         
         self.game_objects = {}
+        
+        self.game_objects_ = []
         
         self.entities = {}
         
@@ -247,6 +260,10 @@ class Scene:
         self.not_animated = True
         
         self.camera = None
+        
+        self.room_label_name = None
+        
+        self.room_label = None
 
     def setup(self):
         if self.player_controller_game_object_name:
@@ -255,12 +272,15 @@ class Scene:
         	self.current_camera = self.game_objects[self.current_camera_name]
         if self.tilemap_name:
         	self.tilemap = self.game_objects[self.tilemap_name]
+        if self.room_label_name:
+        	self.room_label = self.game_objects[self.room_label_name]
         
     def add_game_object(self, new_game_object):
          new_game_object.camera = self.current_camera
          self.game_objects.update({new_game_object.name:new_game_object})
          sorted_keys = sorted(self.game_objects)
          self.game_objects = {key:self.game_objects[key] for key in sorted_keys}
+         self.game_objects_.insert(list(self.game_objects.values()).index(new_game_object), new_game_object)
          if isinstance(new_game_object, Entity):
 	         self.entities.update({new_game_object.name:new_game_object})
 	         sorted_keys = sorted(self.entities)
@@ -272,6 +292,7 @@ class Scene:
           self.sprite_group.add(new_game_object)
     def remove_game_object(self, old_game_object):
         self.game_objects.pop(old_game_object.name)
+        self.game_objects_.remove(old_game_object)
         if isinstance(old_game_object, Entity):
         	self.entities.pop(old_game_object.name)
         elif isinstance(old_game_object, Wall):
@@ -283,8 +304,9 @@ class Scene:
             if self.player_game_object_name and self.current_player_game_object is None:
             			self.current_player_game_object = self.game_objects[self.player_game_object_name]
             			self.current_camera.targeting_game_object = self.current_player_game_object
-            if self.current_player_game_object is not None and self.player_controller_game_object.direction != [0, 0]:
-            	self.current_player_game_object.move(self.player_controller_game_object.direction)
+            if self.current_player_game_object is not None and self.player_controller_game_object is not None:
+            	if self.player_controller_game_object.direction != [0,0]:
+            		self.current_player_game_object.move(self.player_controller_game_object.direction)
 
             for game_object in self.game_objects.values():
             						game_object.tick(delta_time, changed_virtual_screen_position, self.game.screen, self.current_camera)
@@ -507,7 +529,8 @@ class Camera(GameObject):
     		
     def focus_at_game_object(self):
     	if self.targeting_game_object:
-    		self.set_position([self.targeting_game_object.position[0]-self.scene.game.virtual_screen_size[0]/2+self.targeting_game_object.rect.width/2, self.targeting_game_object.position[1]-self.scene.game.virtual_screen_size[1]/2+self.targeting_game_object.rect.height/2])
+    		position = utils.get_camera_position(self.targeting_game_object.position, self.targeting_game_object.rect, self.scene.game.virtual_screen_size)
+    		self.set_position(position)
     
     def slow_focus_at_game_object(self):
     	if self.targeting_game_object:
@@ -546,7 +569,6 @@ class TileMap(GameObject):
         self.old_rect_position = [0,0]
         self.player_chunk_x = 0
         self.player_chunk_y = 0
-
         super().__init__(*args)
 
     def setup(self):
@@ -570,6 +592,8 @@ class TileMap(GameObject):
         
         self.rect.width = self.map_of_chunks_size*cls.chunk_size*cls.tile_size
         self.rect.height = self.map_of_chunks_size*cls.chunk_size*cls.tile_size
+        
+        alpha_tiles_ids = []
 
         for tile_id in tiles_info:
             is_animated = True          
@@ -586,6 +610,7 @@ class TileMap(GameObject):
                 try:
                 	image = pygame.image.load(utils.path("sprites/"+tiles_info[tile_id]+".png"))
                 	image.convert_alpha()
+                	alpha_tiles_ids.append(tile_id)
                 except FileNotFoundError:
                 	image = pygame.image.load(utils.path("sprites/"+tiles_info[tile_id]+".jpg"))
 	            
@@ -594,9 +619,7 @@ class TileMap(GameObject):
                 cls.tiles_images.update({int(tile_id):image})
 
         for chunk_id in range(self.map_of_chunks_size**2):
-
             chunk_image = pygame.Surface((cls.chunk_size*cls.tile_size, cls.chunk_size*cls.tile_size))
-            chunk_image.convert()
             tiles_ids = []
             chunk = Chunk(chunk_id, chunk_image, cls.chunk_size)
             self.chunks.append(chunk)
@@ -606,6 +629,16 @@ class TileMap(GameObject):
                 tiles_ids += tilemap_info[chunk_x*cls.chunk_size+chunk_y*(cls.chunk_size**2)*self.map_of_chunks_size+self.tilemap_size*i:chunk_x*cls.chunk_size+chunk_y*(cls.chunk_size**2)*self.map_of_chunks_size+self.tilemap_size*i+cls.chunk_size]
                 
             chunk.tiles_ids = tiles_ids
+            
+            chunk_is_alpha = False
+            
+            for tile_id in tiles_ids:
+                if tile_id in alpha_tiles_ids:
+                	chunk_is_alpha = True
+            if chunk_is_alpha:
+                chunk_image.convert_alpha()
+            else:
+                chunk_image.convert()
                 
             united_tiles_indexs = []
             for tile_index, tile_id in enumerate(tiles_ids):
@@ -670,7 +703,7 @@ class TileMap(GameObject):
         else:
         	self.player_chunk_x, self.player_chunk_y = 0, 0
         self.visible_chunks = utils.get_visible_chunks(self.player_chunk_x, self.player_chunk_y, self.scene.game.chunk_distance_fov, self.map_of_chunks_size, self.chunks)
-
+        
         for chunk in self.visible_chunks:
          	chunk_x = chunk.id%self.map_of_chunks_size*cls.chunk_size*cls.tile_size
          	chunk_y = chunk.id//self.map_of_chunks_size*cls.chunk_size*cls.tile_size
@@ -678,6 +711,7 @@ class TileMap(GameObject):
          	
          	for i, game_object in enumerate(chunk.game_objects):
          		game_object.update(self.delta_time, self.changed_virtual_screen_position, self.screen, self.camera)
+         
          	"""
          	for chunk in self.chunks:
          		for i, rect in enumerate(chunk.rects):
@@ -733,26 +767,26 @@ class Input(GameObject):
 		
 		if self.mode == "Joystick":
 			mouse_position = self.scene.game.get_mouse_pos()
-			if pygame.mouse.get_pressed()[0] and ((mouse_position[0] >= self.touching_zone_box[0] and mouse_position[0] <= self.touching_zone_box[0]+self.touching_zone_box[2] and mouse_position[1] >= self.touching_zone_box[1] and mouse_position[1] <= self.touching_zone_box[1]+self.touching_zone_box[3]) if not self.mouse_pressed else True):
-				pygame.draw.circle(self.scene.game.screen, self.color, [self.position[0], self.position[1]], self.radius, self.border_radius)
-				pygame.draw.circle(self.scene.game.screen, self.color, [self.stick_position[0], self.stick_position[1]], self.radius/2)
-				if not self.mouse_pressed:
-						self.position = [mouse_position[0], mouse_position[1]]
-						self.mouse_pressed = True
-				angle = math.atan2(mouse_position[1]-self.position[1], mouse_position[0]-self.position[0])
-				vector_x = math.cos(angle)
-				vector_y = math.sin(angle)
-				lenght = math.sqrt((self.position[0]-mouse_position[0])**2+(self.position[1]-mouse_position[1])**2)
-				if lenght > self.radius:
-					lenght = self.radius
-				self.stick_position = [self.position[0]+vector_x*lenght, self.position[1]+vector_y*lenght]
-				self.direction = [vector_x, vector_y]
-				self.scene.game.draw_rects.append(self.rect)
-			else:
-				self.position = self.default_position
-				self.stick_position = self.position
-				self.direction = [0, 0]
-				self.mouse_pressed = False
+			try:
+				if pygame.mouse.get_pressed()[0] and ((mouse_position[0] >= self.touching_zone_box[0] and mouse_position[0] <= self.touching_zone_box[0]+self.touching_zone_box[2] and mouse_position[1] >= self.touching_zone_box[1] and mouse_position[1] <= self.touching_zone_box[1]+self.touching_zone_box[3]) if not self.mouse_pressed else True):
+					pygame.draw.circle(self.scene.game.screen, self.color, [self.position[0], self.position[1]], self.radius, self.border_radius)
+					pygame.draw.circle(self.scene.game.screen, self.color, [self.stick_position[0], self.stick_position[1]], self.radius/2)
+					if not self.mouse_pressed:
+							self.position = [mouse_position[0], mouse_position[1]]
+							self.mouse_pressed = True
+					angle, vector_x, vector_y, lenght = utils.get_joystick_direction(self.position, mouse_position)
+					if lenght > self.radius:
+						lenght = self.radius
+					self.stick_position = [self.position[0]+vector_x*lenght, self.position[1]+vector_y*lenght]
+					self.direction = [vector_x, vector_y]
+					self.scene.game.draw_rects.append(self.rect)
+				else:
+					self.position = self.default_position
+					self.stick_position = self.position
+					self.direction = [0, 0]
+					self.mouse_pressed = False
+			except TypeError:
+				pass
 		elif self.mode == "Keyboard":
 			keys = pygame.key.get_pressed()
 			if self.hot_keys_data_base["PLAYER_UP"]:
@@ -799,14 +833,15 @@ class Button(GameObject):
 		self.color = None
 		self.border_color = None
 		self.border_radius = 0
-		self.change_scene_to_index = None
+		self.func_args = []
 		self.font = None
 		self.rendered_text = None
 		self.rendered_text_size = None
 		self.is_gui = True
+		self.func_name = ""
 	def setup(self, *args):
 		super().setup(*args)
-		self.function = self.scene.game.change_current_scene
+		self.function = getattr(self.scene.game, self.func_name)
 		self.rect = pygame.Rect(self.position[0], self.position[1], self.width, self.height)
 		self.font = pygame.font.SysFont("Ariel", self.width//(len(self.text)+1))
 		self.rendered_text = self.font.render(self.text, self.border_color, True)
@@ -816,11 +851,12 @@ class Button(GameObject):
 		super().tick(*args)
 		pygame.draw.rect(self.scene.game.screen, self.color, self.rect)
 		pygame.draw.rect(self.scene.game.screen, self.border_color, self.rect, self.border_radius)
-		self.scene.game.screen.blit(self.rendered_text, [self.position[0]+self.width/2-self.rendered_text_size[0]/2, self.position[1]+self.height/2-self.rendered_text_size[1]/2])
+		position = utils.get_button_text_position(self.position, [self.width, self.height], self.rendered_text_size)
+		self.scene.game.screen.blit(self.rendered_text, position)
 		if self.ticks % 120 == 0:
 			mouse_pos = self.scene.game.get_mouse_pos()
 			if pygame.mouse.get_pressed()[0] and self.rect.collidepoint(mouse_pos):
-				self.function(self.change_scene_to_index)
+				self.function(*self.func_args)
 			self.scene.game.draw_rects.append(self.rect)
 
 			
@@ -863,9 +899,55 @@ class Text(GameObject):
 				self.rendered_text_size = self.rendered_text.get_size()
 				self.scene.game.draw_rects.append(self.rect)
 			self.text = str(self.scene.game.is_online_mode)
-		self.scene.game.screen.blit(self.rendered_text, [self.position[0]+self.rendered_text_size[0]/2-self.rendered_text_size[0]/2, self.position[1]+self.rendered_text_size[1]/2-self.rendered_text_size[1]/2])
+		self.scene.game.screen.blit(self.rendered_text, [self.position[0], self.position[1]])
 		super().tick(*args)
 
+
+
+class RoomLabel(GameObject):
+	def __init__(self, *args):
+		super().__init__(*args)
+		self.position = [0, 0]
+		self.is_gui = True
+		self.buttons = []
+		self.count_buttons = 0
+		self.width = 0
+		self.height = 0
+		self.border_radius = 10
+		
+	def update_room_label(self):
+		pass
+		
+	def create_button(self, func_args):
+			button = Button()
+			button.camera = self.camera
+			button.scene = self.scene
+			button.animation_name = "Camera"
+			button.position = self.position
+			button.width = 300
+			button.height = 50
+			button.position[1] += self.count_buttons*button.height
+			button.text = "Tap to join"
+			button.color = "white"
+			button.border_color = "black"
+			button.border_radius = 5
+			button.func_name = "join_room"
+			button.func_args = func_args
+			button.setup()
+			self.buttons.append(button)
+			self.count_buttons += 1
+	def setup(self, *args):
+		super().setup(*args)
+			
+	def tick(self, *args):
+		super().tick(*args)
+		pygame.draw.rect(self.scene.game.screen, "black", [self.position[0],self.position[1], self.width, self.height], self.border_radius)
+		for button in self.buttons:
+			button.tick(*args)
+		if self.ticks % 120 == 0:
+			self.events.append(["Get rooms", []])
+
+		
 class Intro(GameObject):
 	def __init__(self, *args):
 		super().__init__(*args)
