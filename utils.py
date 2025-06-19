@@ -2,6 +2,7 @@ import sys
 import os
 import json
 import pygame
+import math
 from functools import wraps
 
 def resource_path(relative):
@@ -73,3 +74,23 @@ def get_chunk_position(chunk_id, map_of_chunks_size, chunk_size, tile_size):
 	chunk_x = chunk_id%map_of_chunks_size*chunk_size*tile_size
 	chunk_y = chunk_id//map_of_chunks_size*chunk_size*tile_size
 	return chunk_x, chunk_y
+
+@memory
+def get_camera_position(position, rect, virtual_screen_size):
+	x = position[0]-virtual_screen_size[0]/2+rect.width/2
+	y = position[1]-virtual_screen_size[1]/2+rect.height/2
+	return [x, y]
+
+@memory
+def get_button_text_position(position, button_size, text_size):
+	x = position[0] + button_size[0]/2 - text_size[0]/2
+	y = position[1] + button_size[1]/2 - text_size[1]/2
+	return [x, y]
+
+@memory
+def get_joystick_direction(position, mouse_position):
+	angle = math.atan2(mouse_position[1]-position[1], mouse_position[0]-position[0])
+	vector_x = math.cos(angle)
+	vector_y = math.sin(angle)
+	lenght = math.sqrt((position[0]-mouse_position[0])**2+(position[1]-mouse_position[1])**2)
+	return angle, vector_x, vector_y, lenght
