@@ -70,7 +70,8 @@
       "Height": 100,
       "Color": "white",
       "Border_color": "black",
-      "Border_radius": 10
+      "Border_radius": 10,
+      "Func_name": "change_current_scene"
     },
     "SquareButton": {
       "Type": "Button",
@@ -80,7 +81,8 @@
       "Height": 150,
       "Color": "white",
       "Border_color": "black",
-      "Border_radius": 10
+      "Border_radius": 10,
+      "Func_name": "change_current_scene"
     },
     "CommonText": {
       "Type": "Text",
@@ -106,6 +108,14 @@
       "Mode": "Coin",
       "Teleport_zone": [0, 1250, 0, 1250],
       "Animation_is_alpha": true
+    },
+    "CommonRoomLabel": {
+      "Type": "RoomLabel",
+      "Animation_name": "Camera",
+      "Not_animated": true,
+      "Animation_is_alpha": true,
+      "Width": 300,
+      "Height": 250
     }
   }
 }
