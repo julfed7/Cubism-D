@@ -4,7 +4,7 @@ import pygame
 import logic
 import copy
 import asyncio
-
+import sys
 
 
 # /// script
@@ -84,7 +84,7 @@ async def main():
 	
 	virtual_screen = pygame.Surface((WIDTH, HEIGHT))
 	
-	icon_image = pygame.image.load(utils.path("sprites/icon.png", ENVIRONMENT_OS))
+	icon_image = pygame.image.load(utils.path(PATH_TO_FOLDER_WHERE_IMAGES+"/icon.png", ENVIRONMENT_OS))
 	
 	pygame.display.set_caption(TITLE)
 	
@@ -94,11 +94,11 @@ async def main():
 	
 	
 	
-	config_animations = utils.read_file(utils.path("settings/register_animations.json", ENVIRONMENT_OS))
+	config_animations = utils.read_file(utils.path(PATH_TO_FOLDER_WHERE_SETTINGS+"/register_animations.json", ENVIRONMENT_OS))
 	
-	config_tilemaps = utils.read_file(utils.path("settings/register_tilemaps.json", ENVIRONMENT_OS))
+	config_tilemaps = utils.read_file(utils.path(PATH_TO_FOLDER_WHERE_SETTINGS+"/register_tilemaps.json", ENVIRONMENT_OS))
 	
-	config_tiles = utils.read_file(utils.path("settings/register_tiles.json", ENVIRONMENT_OS))
+	config_tiles = utils.read_file(utils.path(PATH_TO_FOLDER_WHERE_SETTINGS+"/register_tiles.json", ENVIRONMENT_OS))
 	
 	setattr(logic.GameObject, "config", config)
 	setattr(logic.GameObject, "config_animations", config_animations)
@@ -128,7 +128,8 @@ async def main():
 	  "JoyStick": logic.Input,
 	  "Button": logic.Button,
 	  "Text": logic.Text,
-	  "Intro": logic.Intro
+	  "Intro": logic.Intro,
+	  "RoomLabel": logic.RoomLabel
 	}
 	
 	game_object_types = {}
