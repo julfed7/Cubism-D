@@ -109,8 +109,12 @@ class Game:
           	packet = packet[start_slace:end_slace+1]
           	if not packet:
           			packet = "{}"
+          			response = {"event_bus": [], "ticks":self.ticks}
           	else:
-          			response = json.loads(packet)
+          			try:
+          				response = json.loads(packet)
+          			except json.decoder.JSONDecodeError:
+          				pass
           	self.last_packet_time = time.time()
           	
           	if abs(self.ticks - response["ticks"]) > self.lagging_ticks:
@@ -166,12 +170,8 @@ class Game:
           			elif event_name == "Game object moved":
           						current_scene.game_objects["Z"+str(event_data[0])].position = event_data[1]
           			elif event_name == "Your rooms":
-          						count_buttons = len(event_data[0])
           						room_label = current_scene.game_objects["JoinRoomRoomLabel"]
-          						if room_label.count_buttons != count_buttons:
-          							for i in range(count_buttons):
-          								room_label.create_button(event_data[0][i])
-          							room_label.count_buttons = count_buttons
+          						room_label.update_room_label(event_data[0])
         except BlockingIOError and OSError:
           			pass
           			
@@ -200,8 +200,9 @@ class Game:
         self.current_scene = index
         #self.screen.fill((255,255,255))
     
-    def join_room(self):
-        pass
+    def join_room(self, room_name):
+        self.current_event.append(["Join room", [room_name]])
+        self.change_current_scene(6)
         
     def create_room(self):
         self.current_event.append(["Create room", [str(random.randint(1, 5))]])
@@ -914,11 +915,17 @@ class RoomLabel(GameObject):
 		self.width = 0
 		self.height = 0
 		self.border_radius = 10
+		self.old_position = self.position
 		
-	def update_room_label(self):
-		pass
+	def update_room_label(self, rooms):
+		count_buttons = len(rooms)
+		self.buttons = []
+		self.count_buttons = 0
+		for i in range(count_buttons):
+			self.create_button(rooms[i], [rooms[i]])
+			self.count_buttons += 1
 		
-	def create_button(self, func_args):
+	def create_button(self, text, func_args):
 			button = Button()
 			button.camera = self.camera
 			button.scene = self.scene
@@ -926,8 +933,8 @@ class RoomLabel(GameObject):
 			button.position = self.position
 			button.width = 300
 			button.height = 50
-			button.position[1] += self.count_buttons*button.height
-			button.text = "Tap to join"
+			button.position[1] = self.position[1] + self.count_buttons*button.height
+			button.text = text
 			button.color = "white"
 			button.border_color = "black"
 			button.border_radius = 5
@@ -935,17 +942,16 @@ class RoomLabel(GameObject):
 			button.func_args = func_args
 			button.setup()
 			self.buttons.append(button)
-			self.count_buttons += 1
 	def setup(self, *args):
 		super().setup(*args)
+		self.old_position = self.position
 			
 	def tick(self, *args):
 		super().tick(*args)
 		pygame.draw.rect(self.scene.game.screen, "black", [self.position[0],self.position[1], self.width, self.height], self.border_radius)
 		for button in self.buttons:
 			button.tick(*args)
-		if self.ticks % 120 == 0:
-			self.events.append(["Get rooms", []])
+		self.position = self.old_position
 
 		
 class Intro(GameObject):
