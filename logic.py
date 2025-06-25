@@ -9,7 +9,7 @@ import utils
 
 
 class Game:
-    __slots__ = ["__scenes", "current_scene", "screen", "changed_virtual_screen_position", "virtual_screen_size", "screen_size", "ENVIRONMENT_OS", "TILE_SIZE", "IP", "is_online_mode", "current_event", "ticks", "itinerarium", "game_object_types", "my_id", "network_checking_time", "lagging_ticks", "last_packet_time", "chunk_distance_fov", "clock", "game_objects_render_distance", "draw_rects"]
+    __slots__ = ["__scenes", "current_scene", "screen", "changed_virtual_screen_position", "virtual_screen_size", "screen_size", "ENVIRONMENT_OS", "TILE_SIZE", "IP", "is_online_mode", "current_event", "ticks", "itinerarium", "game_object_types", "my_id", "network_checking_time", "lagging_ticks", "last_packet_time", "chunk_distance_fov", "clock", "game_objects_render_distance", "draw_rects", "SELF_PLAYER_TYPE_ID"]
     def __init__(self):
         self.__scenes = {}
         
@@ -29,6 +29,8 @@ class Game:
         
         self.IP = None
         
+        self.SELF_PLAYER_TYPE_ID = 0
+        
         self.is_online_mode = False
         
         self.current_event = []
@@ -43,7 +45,7 @@ class Game:
         
         self.network_checking_time = 20
         
-        self.lagging_ticks = 15
+        self.lagging_ticks = 2400
         
         self.last_packet_time = time.time()
         
@@ -98,7 +100,7 @@ class Game:
               	self.itinerarium.sendto(data, tuple(self.IP))
               	self.current_event = []
               except BrokenPipeError:
-              	pass
+              	raise
         try:
           	data = self.itinerarium.recv(1024)
           	packet = data.decode()
@@ -114,11 +116,12 @@ class Game:
           			try:
           				response = json.loads(packet)
           			except json.decoder.JSONDecodeError:
-          				pass
+          				response = {"event_bus": [], "ticks":self.ticks}
           	self.last_packet_time = time.time()
           	
           	if abs(self.ticks - response["ticks"]) > self.lagging_ticks:
-          				self.current_event.append(["Get condition of the room", [True]])
+          		pass
+          		#self.current_event.append(["Get condition of the room", [True]])
           	
           	for event in response["event_bus"]:
           			event_name = event[0]
@@ -133,14 +136,16 @@ class Game:
           			elif event_name == "Add game object":
           				if event_data[0] == "Player":
           						game_object = copy.copy(self.game_object_types["PeaShooter"])
-          						game_object.name = "Z"+str(event_data[1])
-          						game_object.id = event_data[1]
-          						game_object.position = event_data[2]
-          						game_object.scene = current_scene
-          						game_object.camera = current_scene.current_camera
-          						game_object.is_online_mode = True
-          						game_object.setup()
-          						current_scene.add_game_object(game_object)
+          				elif event_data[0] == "Cube":
+          						game_object = copy.copy(self.game_object_types["Cube"])
+          				game_object.name = "Z"+str(event_data[1])
+          				game_object.id = event_data[1]
+          				game_object.position = event_data[2]
+          				game_object.scene = current_scene
+          				game_object.camera = current_scene.current_camera
+          				game_object.is_online_mode = True
+          				game_object.setup()
+          				current_scene.add_game_object(game_object)
           			elif event_name == "Your condition of the room":
           						self.ticks = response["ticks"]
           						live_game_objects_names = []
@@ -169,9 +174,28 @@ class Game:
           										current_scene.remove_game_object(game_object)
           			elif event_name == "Game object moved":
           						current_scene.game_objects["Z"+str(event_data[0])].position = event_data[1]
+          						print("Z"+str(event_data[0]))
           			elif event_name == "Your rooms":
           						room_label = current_scene.game_objects["JoinRoomRoomLabel"]
           						room_label.update_room_label(event_data[0])
+          			elif event_name == "Game object state changed":
+          				if event_data[0] == 2:
+          					if event_data[4] == self.SELF_PLAYER_TYPE_ID:
+          						current_scene.game_objects.pop(current_scene.current_player_game_object.name)
+          						current_scene.current_player_game_object.name = "Z"+str(event_data[1])
+          						current_scene.current_player_game_object.id = event_data[1]
+          						current_scene.game_objects.update({current_scene.current_player_game_object.name:current_scene.current_player_game_object})
+          					else:
+          						game_object = copy.copy(self.game_object_types["PeaShooter"])
+          						game_object.name = "Z"+str(event_data[1])
+          						game_object.id = event_data[1]
+          						game_object.position = event_data[2]
+          						game_object.scene = current_scene
+          						game_object.camera = current_scene.current_camera
+          						game_object.is_online_mode = True
+          						game_object.setup()
+          						current_scene.game_objects.update({game_object.name:game_object})
+          				current_scene.game_objects["Z"+str(event_data[1])].position = event_data[3]
         except BlockingIOError and OSError:
           			pass
           			
@@ -302,6 +326,9 @@ class Scene:
             if self.my_player_id is not None:
             		if "Z"+str(self.my_player_id) in self.game_objects:
             			self.player_game_object_name = "Z"+str(self.my_player_id)
+            			self.game_objects[self.player_game_object_name].id = self.my_player_id
+
+            			
             if self.player_game_object_name and self.current_player_game_object is None:
             			self.current_player_game_object = self.game_objects[self.player_game_object_name]
             			self.current_camera.targeting_game_object = self.current_player_game_object
@@ -335,6 +362,7 @@ class GameObject(pygame.sprite.Sprite):
         self.is_online_mode = False
         self.events = []
         self.id = None
+        self.type_id = None
         self.is_gui = False
         self.animation_is_alpha = False
         self.not_animated = False
@@ -471,7 +499,8 @@ class Entity(GameObject):
     			self.position[1] -= self.speed * self.velocity[1] * self.delta_time
     			self.rect.y = self.position[1] - self.camera.position[1]
     	
-    	self.events.append(["Game object moved", [self.id, self.velocity]])
+    	if self.type_id == 0:
+    		self.events.append(["Game object state changed", [2, self.id, self.velocity, self.position, self.type_id]])
     	
     	self.velocity = [0, 0]
     	
