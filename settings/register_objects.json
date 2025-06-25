@@ -3,6 +3,12 @@
     "PeaShooter": {
       "Type": "Entity",
       "Animation_name": "PeaShooter",
+      "Speed": 200,
+      "Type_id": 1
+    },
+    "Cube": {
+      "Type": "Entity",
+      "Animation_name": "Player",
       "Speed": 200
     },
     "Grass": {
