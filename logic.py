@@ -127,7 +127,7 @@ class Game:
           			event_name = event[0]
           			event_data = event[1]
           				
-          			#print(event_name, event_data)
+          			print(event_name, event_data)
           				
           			if event_name == "Your ID":
           				self.my_id = event_data[0]
@@ -185,7 +185,7 @@ class Game:
           						current_scene.current_player_game_object.name = "Z"+str(event_data[1])
           						current_scene.current_player_game_object.id = event_data[1]
           						current_scene.game_objects.update({current_scene.current_player_game_object.name:current_scene.current_player_game_object})
-          					else:
+          					elif "Z"+str(event_data[1]) not in current_scene.game_objects:
           						game_object = copy.copy(self.game_object_types["PeaShooter"])
           						game_object.name = "Z"+str(event_data[1])
           						game_object.id = event_data[1]
@@ -499,7 +499,7 @@ class Entity(GameObject):
     			self.position[1] -= self.speed * self.velocity[1] * self.delta_time
     			self.rect.y = self.position[1] - self.camera.position[1]
     	
-    	if self.type_id == 0:
+    	if self.type_id == self.scene.game.SELF_PLAYER_TYPE_ID:
     		self.events.append(["Game object state changed", [2, self.id, self.velocity, self.position, self.type_id]])
     	
     	self.velocity = [0, 0]
