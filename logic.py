@@ -9,7 +9,7 @@ import utils
 
 
 class Game:
-    __slots__ = ["__scenes", "current_scene", "screen", "changed_virtual_screen_position", "virtual_screen_size", "screen_size", "ENVIRONMENT_OS", "TILE_SIZE", "IP", "is_online_mode", "current_event", "ticks", "itinerarium", "game_object_types", "my_id", "network_checking_time", "lagging_ticks", "last_packet_time", "chunk_distance_fov", "clock", "game_objects_render_distance", "draw_rects", "SELF_PLAYER_TYPE_ID"]
+    __slots__ = ["__scenes", "current_scene", "screen", "changed_virtual_screen_position", "virtual_screen_size", "screen_size", "ENVIRONMENT_OS", "TILE_SIZE", "IP", "is_online_mode", "current_event", "ticks", "itinerarium", "game_object_types", "my_id", "network_checking_time", "lagging_ticks", "last_packet_time", "chunk_distance_fov", "clock", "game_objects_render_distance", "draw_rects", "SELF_PLAYER_TYPE_ID", "OTHER_PLAYER_TYPE_ID"]
     def __init__(self):
         self.__scenes = {}
         
@@ -30,6 +30,8 @@ class Game:
         self.IP = None
         
         self.SELF_PLAYER_TYPE_ID = 0
+        
+        self.OTHER_PLAYER_TYPE_ID = 1
         
         self.is_online_mode = False
         
@@ -92,6 +94,13 @@ class Game:
           				
         if self.ticks % 120 == 0:
           	self.current_event.append(["Client alive", [True]])
+          	
+        if self.ticks % 60 == 0 and current_scene.my_player_id is None and current_scene.name == "Room":
+        	self.current_event.append(["Get player ID", []])
+        
+        if current_scene.my_player_id is not None:
+        	self.current_event.append(["Get game objects", []])
+        
         if self.current_event != []:
               try:
               	request = {"event_bus": self.current_event, "ticks": self.ticks}
@@ -196,6 +205,40 @@ class Game:
           						game_object.setup()
           						current_scene.game_objects.update({game_object.name:game_object})
           				current_scene.game_objects["Z"+str(event_data[1])].position = event_data[3]
+          			elif event_name == "Add room":
+          				room_label = self.scenes["JoinRoom"].game_objects["JoinRoomRoomLabel"]
+          				room_label.update_room_label(event_data)
+          			elif event_name == "Your game objects":
+          				data = event_data[0]
+          				if str(current_scene.my_player_id) in data[1] and "Z"+str(current_scene.my_player_id) not in current_scene.game_objects:
+          						game_object = copy.copy(self.game_object_types["PeaShooter"])
+          						game_object.name = "Z"+str(current_scene.my_player_id)
+          						game_object.id = current_scene.my_player_id
+          						game_object.type_id = self.SELF_PLAYER_TYPE_ID
+          						game_object.position = data[1][str(current_scene.my_player_id)][0]
+          						game_object.velocity = data[1][str(current_scene.my_player_id)][0]
+          						game_object.scene = current_scene
+          						game_object.camera = current_scene.current_camera
+          						game_object.is_online_mode = True
+          						game_object.setup()
+          						current_scene.game_objects.update({game_object.name:game_object})
+          				for player_id in data[0]:
+          					if "Z"+str(player_id) not in current_scene.game_objects:
+          						game_object = copy.copy(self.game_object_types["PeaShooter"])
+          						game_object.name = "Z"+str(current_scene.my_player_id)
+          						game_object.id = current_scene.my_player_id
+          						game_object.type_id = self.OTHER_PLAYER_TYPE_ID
+          						game_object.position = data[1][str(current_scene.my_player_id)][0]
+          						game_object.velocity = data[1][str(current_scene.my_player_id)][1]
+          						game_object.scene = current_scene
+          						game_object.camera = current_scene.current_camera
+          						game_object.is_online_mode = True
+          						game_object.setup()
+          						current_scene.game_objects.update({game_object.name:game_object})
+          					else:
+          						current_scene.game_objects["Z"+str(player_id)].position = data[1][str(current_scene.my_player_id)][0]
+          						if player_id != current_scene.my_player_id:
+          							current_scene.game_objects["Z"+str(player_id)].velocity = data[1][str(current_scene.my_player_id)][1]
         except BlockingIOError and OSError:
           			pass
           			
