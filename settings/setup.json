@@ -339,9 +339,8 @@
     "Room": {
       "Type": "CommonScene",
       "Arguments": {
-        "Game_objects": ["Block", "Player_fov", "A_MapWorld", "Input", "KeyBoardForComputers", "FpsCounter", "OnlineModeViewer", "Player"],
+        "Game_objects": ["Block", "Player_fov", "A_MapWorld", "Input", "KeyBoardForComputers", "FpsCounter", "OnlineModeViewer"],
         "Player_controller_game_object_name": "Input",
-        "Player_game_object_name": "Player",
         "Is_online_mode": true,
         "Tilemap_name": "A_MapWorld"
       }
@@ -399,14 +398,6 @@
       "Arguments": {
         "Position": [0, 50]
       }
-    },
-    "Player": {
-      "Type": "PeaShooter",
-      "Arguments": {
-        "Position": [0, 0],
-        "Is_online_mode": true,
-        "Type_id": 0
-      }
     }
   }
-  }
+    }
