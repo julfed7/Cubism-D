@@ -9,7 +9,7 @@ import utils
 
 
 class Game:
-    __slots__ = ["__scenes", "current_scene", "screen", "changed_virtual_screen_position", "virtual_screen_size", "screen_size", "ENVIRONMENT_OS", "TILE_SIZE", "IP", "is_online_mode", "current_event", "ticks", "itinerarium", "game_object_types", "my_id", "network_checking_time", "lagging_ticks", "last_packet_time", "chunk_distance_fov", "clock", "game_objects_render_distance", "draw_rects", "SELF_PLAYER_TYPE_ID", "OTHER_PLAYER_TYPE_ID"]
+    __slots__ = ["__scenes", "current_scene", "screen", "changed_virtual_screen_position", "virtual_screen_size", "screen_size", "ENVIRONMENT_OS", "TILE_SIZE", "IP", "is_online_mode", "current_event", "ticks", "itinerarium", "game_object_types", "my_id", "network_checking_time", "lagging_ticks", "last_packet_time", "chunk_distance_fov", "clock", "game_objects_render_distance", "draw_rects", "SELF_PLAYER_TYPE_ID", "OTHER_PLAYER_TYPE_ID", "MAP_MAX_SIZE"]
     def __init__(self):
         self.__scenes = {}
         
@@ -32,6 +32,8 @@ class Game:
         self.SELF_PLAYER_TYPE_ID = 0
         
         self.OTHER_PLAYER_TYPE_ID = 1
+        
+        self.MAP_MAX_SIZE = [-50000, 50000, -50000, 50000]
         
         self.is_online_mode = False
         
@@ -222,23 +224,23 @@ class Game:
           						game_object.is_online_mode = True
           						game_object.setup()
           						current_scene.game_objects.update({game_object.name:game_object})
-          				for player_id in data[0]:
-          					if "Z"+str(player_id) not in current_scene.game_objects:
+          				for game_object_id in data[0]:
+          					if "Z"+str(game_object_id) not in current_scene.game_objects:
           						game_object = copy.copy(self.game_object_types["PeaShooter"])
-          						game_object.name = "Z"+str(current_scene.my_player_id)
-          						game_object.id = current_scene.my_player_id
+          						game_object.name = "Z"+str(game_object_id)
+          						game_object.id = game_object_id
           						game_object.type_id = self.OTHER_PLAYER_TYPE_ID
-          						game_object.position = data[1][str(current_scene.my_player_id)][0]
-          						game_object.velocity = data[1][str(current_scene.my_player_id)][1]
+          						game_object.position = data[1][str(game_object_id)][0]
+          						game_object.velocity = data[1][str(game_object_id)][1]
           						game_object.scene = current_scene
           						game_object.camera = current_scene.current_camera
           						game_object.is_online_mode = True
           						game_object.setup()
           						current_scene.game_objects.update({game_object.name:game_object})
           					else:
-          						current_scene.game_objects["Z"+str(player_id)].position = data[1][str(current_scene.my_player_id)][0]
-          						if player_id != current_scene.my_player_id:
-          							current_scene.game_objects["Z"+str(player_id)].velocity = data[1][str(current_scene.my_player_id)][1]
+          						if game_object_id != current_scene.my_player_id:
+          							current_scene.game_objects["Z"+str(game_object_id)].position = data[1][str(game_object_id)][0]
+          							current_scene.game_objects["Z"+str(game_object_id)].velocity = data[1][str(game_object_id)][1]
         except BlockingIOError and OSError:
           			pass
           			
@@ -419,7 +421,14 @@ class GameObject(pygame.sprite.Sprite):
         if not self.is_rendered:
         	self.scene.game.draw_rects.append(self.rect)
         	self.is_rendered = True
-        
+        if self.position[0] > self.scene.game.MAP_MAX_SIZE[1]:
+        	self.position[0] = self.scene.game.MAP_MAX_SIZE[1]
+        elif self.position[0] < self.scene.game.MAP_MAX_SIZE[0]:
+        	self.position[0] = self.scene.game.MAP_MAX_SIZE[0]
+        if self.position[1] > self.scene.game.MAP_MAX_SIZE[1]:
+        	self.position[1] = self.scene.game.MAP_MAX_SIZE[1]
+        elif self.position[1] < self.scene.game.MAP_MAX_SIZE[0]:
+        	self.position[1] = self.scene.game.MAP_MAX_SIZE[0]
         if not self.is_gui:
         	self.rect.x = self.position[0] - self.camera.position[0]
         	self.rect.y = self.position[1] - self.camera.position[1]
@@ -912,6 +921,7 @@ class Button(GameObject):
 		self.rendered_text_size = None
 		self.is_gui = True
 		self.func_name = ""
+		self.button_press_time = 1
 	def setup(self, *args):
 		super().setup(*args)
 		self.function = getattr(self.scene.game, self.func_name)
@@ -926,7 +936,7 @@ class Button(GameObject):
 		pygame.draw.rect(self.scene.game.screen, self.border_color, self.rect, self.border_radius)
 		position = utils.get_button_text_position(self.position, [self.width, self.height], self.rendered_text_size)
 		self.scene.game.screen.blit(self.rendered_text, position)
-		if self.ticks % 120 == 0:
+		if self.ticks % self.button_press_time == 0:
 			mouse_pos = self.scene.game.get_mouse_pos()
 			if pygame.mouse.get_pressed()[0] and self.rect.collidepoint(mouse_pos):
 				self.function(*self.func_args)
