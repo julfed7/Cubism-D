@@ -188,7 +188,7 @@
       "Type": "CommonScene",
       "Arguments": {
         "Game_objects": ["CreateRoomCamera", "CreateRoomText", "CreateRoomText","CreateRoomButton", "CreateRoomBackground"],
-        "Is_online_mode": true,
+        "Is_online_mode": false,
         "Current_camera_name": "CreateRoomCamera"
       }
     },
