@@ -327,7 +327,10 @@
         "Border_radius": 10,
         "Touching_zone_box": [0, 0, 500, 768],
         "Hot_keys": {
-          "PLAYER_UP": "W"
+          "PLAYER_UP": "W",
+          "PLAYER_LEFT": "A",
+          "PLAYER_DOWN": "S",
+          "PLAYER_RIGHT": "D"
         }
       }
     },
@@ -383,7 +386,10 @@
       "Arguments": {
         "Position": [0, 0],
         "Hot_keys": {
-          "PLAYER_UP": "W"
+          "PLAYER_UP": "W",
+          "PLAYER_LEFT": "A",
+          "PLAYER_DOWN": "S",
+          "PLAYER_RIGHT": "D"
         },
         "Is_only_for_smartphones": false
       }
