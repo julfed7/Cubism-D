@@ -9,7 +9,7 @@ import utils
 
 
 class Game:
-    __slots__ = ["__scenes", "current_scene", "screen", "changed_virtual_screen_position", "virtual_screen_size", "screen_size", "ENVIRONMENT_OS", "TILE_SIZE", "IP", "is_online_mode", "current_event", "ticks", "itinerarium", "game_object_types", "my_id", "network_checking_time", "lagging_ticks", "last_packet_time", "chunk_distance_fov", "clock", "game_objects_render_distance", "draw_rects", "SELF_PLAYER_TYPE_ID", "OTHER_PLAYER_TYPE_ID", "MAP_MAX_SIZE"]
+    __slots__ = ["__scenes", "current_scene", "screen", "changed_virtual_screen_position", "virtual_screen_size", "screen_size", "ENVIRONMENT_OS", "TILE_SIZE", "IP", "is_online_mode", "current_event", "ticks", "itinerarium", "game_object_types", "my_id", "network_checking_time", "lagging_ticks", "last_packet_time", "chunk_distance_fov", "clock", "game_objects_render_distance", "draw_rects", "SELF_PLAYER_TYPE_ID", "OTHER_PLAYER_TYPE_ID", "MAP_MAX_SIZE", "ONLINE_GAME_OBJECTS_RENDER_DISTANCE"]
     def __init__(self):
         self.__scenes = {}
         
@@ -34,6 +34,8 @@ class Game:
         self.OTHER_PLAYER_TYPE_ID = 1
         
         self.MAP_MAX_SIZE = [-50000, 50000, -50000, 50000]
+        
+        self.ONLINE_GAME_OBJECTS_RENDER_DISTANCE = 300
         
         self.is_online_mode = False
         
@@ -97,7 +99,7 @@ class Game:
         if self.ticks % 120 == 0:
           	self.current_event.append(["Client alive", [True]])
           	
-        if self.ticks % 60 == 0 and current_scene.my_player_id is None and current_scene.name == "Room":
+        if self.ticks % 60 == 0 and current_scene.my_player_id is None and current_scene.is_online_mode is True:
         	self.current_event.append(["Get player ID", []])
         
         if current_scene.my_player_id is not None:
@@ -223,7 +225,7 @@ class Game:
           						game_object.camera = current_scene.current_camera
           						game_object.is_online_mode = True
           						game_object.setup()
-          						current_scene.game_objects.update({game_object.name:game_object})
+          						current_scene.add_game_object(game_object)
           				for game_object_id in data[0]:
           					if "Z"+str(game_object_id) not in current_scene.game_objects:
           						game_object = copy.copy(self.game_object_types["PeaShooter"])
@@ -236,11 +238,13 @@ class Game:
           						game_object.camera = current_scene.current_camera
           						game_object.is_online_mode = True
           						game_object.setup()
-          						current_scene.game_objects.update({game_object.name:game_object})
+          						current_scene.add_game_object(game_object)
           					else:
+          						current_scene.game_objects["Z"+str(game_object_id)].position = data[1][str(game_object_id)][0]
+          						current_scene.game_objects["Z"+str(game_object_id)].velocity = data[1][str(game_object_id)][1]
+          						"""
           						if game_object_id != current_scene.my_player_id:
-          							current_scene.game_objects["Z"+str(game_object_id)].position = data[1][str(game_object_id)][0]
-          							current_scene.game_objects["Z"+str(game_object_id)].velocity = data[1][str(game_object_id)][1]
+          						"""
         except BlockingIOError and OSError:
           			pass
           			
@@ -282,6 +286,17 @@ class Game:
         current_scene = self.get_scene()
         current_scene.room_label = current_scene.game_objects[room_label_name]
         self.current_event.append(["Get rooms", []])
+    def exit_from_room(self):
+        current_scene = self.get_scene()
+        current_scene.my_player_id = None
+        current_scene.player_game_object_name = None
+        current_scene.current_player_game_object = None
+        for game_object_name in current_scene.game_objects:
+        	game_object = current_scene.game_objects[game_object_name]
+        	if game_object.type_id is not None:
+        		current_scene.remove_game_object(game_object)
+        self.change_current_scene(0)
+        self.current_event.append(["Leave room", []])
         
     @property
     def scenes(self):
@@ -356,17 +371,17 @@ class Scene:
 	         sorted_keys = sorted(self.entities)
 	         self.entities = {key:self.entities[key] for key in sorted_keys}
          elif isinstance(new_game_object, Wall):
-          self.walls.update({new_game_object.name:new_game_object})
-          sorted_keys = sorted(self.walls)
-          self.walls = {key:self.walls[key] for key in sorted_keys}
-          self.sprite_group.add(new_game_object)
+	          self.walls.update({new_game_object.name:new_game_object})
+	          sorted_keys = sorted(self.walls)
+	          self.walls = {key:self.walls[key] for key in sorted_keys}
+	          self.sprite_group.add(new_game_object)
     def remove_game_object(self, old_game_object):
-        self.game_objects.pop(old_game_object.name)
-        self.game_objects_.remove(old_game_object)
-        if isinstance(old_game_object, Entity):
-        	self.entities.pop(old_game_object.name)
-        elif isinstance(old_game_object, Wall):
-        	self.walls.pop(old_game_object.name)
+        if old_game_object.name in self.game_objects:
+	        self.game_objects.pop(old_game_object.name)
+	        if isinstance(old_game_object, Entity):
+	        	self.entities.pop(old_game_object.name)
+	        elif isinstance(old_game_object, Wall):
+	        	self.walls.pop(old_game_object.name)
     def tick(self, delta_time, changed_virtual_screen_position):
             if self.my_player_id is not None:
             		if "Z"+str(self.my_player_id) in self.game_objects:
@@ -380,11 +395,15 @@ class Scene:
             if self.current_player_game_object is not None and self.player_controller_game_object is not None:
             	if self.player_controller_game_object.direction != [0,0]:
             		self.current_player_game_object.move(self.player_controller_game_object.direction)
-
-            for game_object in self.game_objects.values():
-            						game_object.tick(delta_time, changed_virtual_screen_position, self.game.screen, self.current_camera)
-            						self.game.current_event += game_object.events
-            						game_object.events = []
+            	elif self.current_player_game_object.velocity != [0,0]:
+            		self.game.current_event.append(["Game object state changed", [2, self.current_player_game_object.id, [0,0], self.current_player_game_object.position, self.current_player_game_object.type_id]])
+            try:
+	            for game_object in self.game_objects.values():
+	            						game_object.tick(delta_time, changed_virtual_screen_position, self.game.screen, self.current_camera)
+	            						self.game.current_event += game_object.events
+	            						game_object.events = []
+            except RuntimeError:
+            	pass
 
 class GameObject(pygame.sprite.Sprite):
     __slots__ = ["type", "animation_name", "name", "position", "ticks", "last_frame_flip_ticks", "animation_ticks", "animation_current_frame", "state", "animation_frame_images", "image", "rect", "camera", "scene", "is_only_for_smartphones", "is_online_mode", "events", "id",  "is_gui", "animation_is_alpha", "not_animated", "is_rendered"]
@@ -447,7 +466,7 @@ class GameObject(pygame.sprite.Sprite):
 
         	self.image = self.animation_frame_images[self.state][self.animation_current_frame]
         	
-        	screen.blit(self.image, self.rect)     	
+        	screen.blit(self.image, self.rect)
         	
         self.ticks += 1
 
