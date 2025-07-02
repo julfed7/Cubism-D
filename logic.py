@@ -841,8 +841,8 @@ class Input(GameObject):
 			"ESCAPE": pygame.K_ESCAPE,
 			"W": pygame.K_w,
 			"A": pygame.K_a,
-			"S": pygame.K_w,
-			"D": pygame.K_w
+			"S": pygame.K_s,
+			"D": pygame.K_d
 		}
 		self.hot_keys_data_base = {
 			"PLAYER_UP": None,
@@ -892,8 +892,15 @@ class Input(GameObject):
 			keys = pygame.key.get_pressed()
 			if self.hot_keys_data_base["PLAYER_UP"]:
 			                 	if keys[self.hot_keys_data_base["PLAYER_UP"]]:
+			                 		self.direction[1] = -1
+			                 	elif keys[self.hot_keys_data_base["PLAYER_DOWN"]]:
 			                 		self.direction[1] = 1
-
+			                 	elif keys[self.hot_keys_data_base["PLAYER_LEFT"]]:
+			                 		self.direction[0] = -1
+			                 	elif keys[self.hot_keys_data_base["PLAYER_RIGHT"]]:
+			                 		self.direction[0] = 1
+			                 	else:
+			                 		self.direction = [0, 0]
 class KeyBoard(GameObject):
 	def __init__(self, *args):
 		super().__init__(*args)
