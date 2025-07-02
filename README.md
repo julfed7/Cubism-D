@@ -5,3 +5,6 @@ Source code video game created with pygame
 
 link to play:
 https://julfed.itch.io/cubism-d
+
+Current task:
+Make players's nickname view
