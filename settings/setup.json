@@ -63,10 +63,11 @@
       }
     },
     "MenuVersion": {
-      "Type": "SmallText",
+      "Type": "CommonText",
       "Arguments": {
-        "Position": [0, 740],
-        "Text": "1.0.1"
+        "Position": [0, 730],
+        "Text": "Cubism D 1.0.1",
+        "Size": 28
       }
     },
     "Z_MenuIntro": {
@@ -339,7 +340,7 @@
     "Room": {
       "Type": "CommonScene",
       "Arguments": {
-        "Game_objects": ["Block", "Player_fov", "A_MapWorld", "Input", "KeyBoardForComputers", "FpsCounter", "OnlineModeViewer"],
+        "Game_objects": ["Block", "Player_fov", "A_MapWorld", "Input", "KeyBoardForComputers", "FpsCounter", "OnlineModeViewer", "ExitButton"],
         "Player_controller_game_object_name": "Input",
         "Is_online_mode": true,
         "Tilemap_name": "A_MapWorld"
@@ -398,6 +399,15 @@
       "Arguments": {
         "Position": [0, 50]
       }
+    },
+    "ExitButton": {
+      "Type": "SquareButton",
+      "Arguments": {
+        "Position": [1216, 0],
+        "Text": "Exit",
+        "Func_name": "exit_from_room",
+        "Func_args": []
+      }
     }
   }
-    }
+}
