@@ -7,4 +7,4 @@ link to play:
 https://julfed.itch.io/cubism-d
 
 Current task:
-Make combat for players
+Make tilemap bigger
