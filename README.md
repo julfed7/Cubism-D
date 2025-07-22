@@ -7,4 +7,4 @@ link to play:
 https://julfed.itch.io/cubism-d
 
 Current task:
-Make tilemap bigger
+Make online tilemap bigger
