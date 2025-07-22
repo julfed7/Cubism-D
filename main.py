@@ -5,7 +5,7 @@ import logic
 import copy
 import asyncio
 import sys
-
+import websockets
 
 # /// script
 # dependencies = [
@@ -15,8 +15,13 @@ import sys
 
 
 
-async def main():
-	ENVIRONMENT_OS = "Android"
+async def main():	
+	device_type = "smartphone"
+
+	if device_type == "smartphone":
+		ENVIRONMENT_OS = "Android"
+	else:
+		ENVIRONMENT_OS = "Windows"
 	
 	PATH_TO_FOLDER_WHERE_SETTINGS = "settings"
 	
@@ -59,6 +64,10 @@ async def main():
 	CAMERA_GAME_OBJECT_NAME = config["App"]["Camera_game_object_name"]
 	
 	IP = config["App"]["IP"]
+	
+	TEXT_BOX_SCENE_NAME = config["App"]["Text_box_scene_name"]
+	
+	TEXT_BOX_NAME = config["App"]["Text_box_name"]
 	
 	
 	ticks = 0
@@ -129,7 +138,9 @@ async def main():
 	  "Button": logic.Button,
 	  "Text": logic.Text,
 	  "Intro": logic.Intro,
-	  "RoomLabel": logic.RoomLabel
+	  "RoomLabel": logic.RoomLabel,
+	  "TextBox": logic.TextBox,
+	  "Inventory": logic.Inventory
 	}
 	
 	game_object_types = {}
@@ -204,14 +215,26 @@ async def main():
 		game.add_scene(scene)
 		
 	pygame.event.set_allowed([pygame.QUIT, pygame.KEYUP])
+	
+	if TEXT_BOX_SCENE_NAME is not None and TEXT_BOX_NAME is not None:
+		text_box = game.scenes[TEXT_BOX_SCENE_NAME].game_objects[TEXT_BOX_NAME]
+	else:
+		text_box = None
 
 	while is_running:
-		for event in pygame.event.get():
+		events = pygame.event.get()
+		for event in events:
 			if event.type == pygame.QUIT:
 				is_running = 0
 			elif event.type == pygame.KEYUP:
 				if event.key == pygame.K_ESCAPE:
-					is_running = 0		
+					is_running = 0
+				elif event.key == pygame.K_BACKSPACE:
+					if text_box is not None:
+						text_box.text = text_box.text[:len(text_box.text)-1]
+				elif text_box is not None and ENVIRONMENT_OS == "Windows":
+						if len(text_box.text)+1 <= text_box.max_count_symbols:
+							text_box.text += event.unicode
 	
 		#Window
 	
@@ -251,6 +274,9 @@ async def main():
 		#Moving game
 		game.tick(delta_time, changed_virtual_screen_position)
 		
+		text_box.keyboard.update(events)
+		
+		text_box.keyboard.draw(virtual_screen)
 		
 		changed_virtual_screen_size = changed_virtual_screen.get_size()
 		

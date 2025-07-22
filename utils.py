@@ -3,6 +3,8 @@ import os
 import json
 import pygame
 import math
+import asyncio
+import tornado
 from functools import wraps
 
 def resource_path(relative):
@@ -56,7 +58,10 @@ def get_visible_chunks(player_chunk_x, player_chunk_y, chunk_distance_fov, map_o
 
 @memory
 def get_here_chunk(player_chunk_x, player_chunk_y, chunks, map_of_chunks_size):
-	return chunks[player_chunk_x+player_chunk_y*map_of_chunks_size]
+	try:
+		return chunks[player_chunk_x+player_chunk_y*map_of_chunks_size]
+	except IndexError:
+		return chunks[0]
 
 @memory
 def get_entity_rects(entities):
