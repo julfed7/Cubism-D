@@ -10,11 +10,11 @@
 
     "Height": 768,
 
-    "Chunk_size": 5,
+    "Chunk_size": 4,
 
     "Tile_size": 50,
 
-    "Chunk_distance_fov": 3,
+    "Chunk_distance_fov": 1,
 
     "Game_objects_render_distance": 684,
 
@@ -22,7 +22,11 @@
 
     "Camera_game_object_name": "Player_fov",
 
-    "IP": ["localhost", 21123]
+    "IP": ["localhost", 21123],
+
+    "Text_box_scene_name": "Settings",
+
+    "Text_box_name": "TextBoxPlayerName"
 
   }
 

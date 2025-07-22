@@ -1,5 +1,11 @@
 {
   "Setup": {
+    "TextBoxPlayerName": {
+      "Type": "CommonTextBox",
+      "Arguments": {
+        "Position": [230, 300]
+      }
+    },
     "Menu": {
       "Type": "CommonScene",
       "Arguments": {
@@ -37,7 +43,7 @@
       "Arguments": {
         "Position": [509, 250],
         "Text": "Join Room",
-        "Func_args": [2]
+        "Func_args": [4]
       }
     },
     "MenuButtonCreateRoom": {
@@ -45,7 +51,7 @@
       "Arguments": {
         "Position": [509, 400],
         "Text": "Create Room",
-        "Func_args": [3]
+        "Func_args": [2]
       }
     },
     "MenuButtonSettings": {
@@ -53,7 +59,7 @@
       "Arguments": {
         "Position": [509, 550],
         "Text": "Settings",
-        "Func_args": [4]
+        "Func_args": [3]
       }
     },
     "MenuBackground": {
@@ -131,6 +137,93 @@
         "Position": [0, 0]
       }
     },
+    "CreateRoom": {
+      "Type": "CommonScene",
+      "Arguments": {
+        "Game_objects": ["CreateRoomCamera", "CreateRoomText", "Z_CreateRoomButtonBack","Z_CreateRoomButton", "CreateRoomBackground"],
+        "Is_online_mode": false,
+        "Current_camera_name": "CreateRoomCamera"
+      }
+    },
+    "Z_CreateRoomButtonBack": {
+      "Type": "SquareButton",
+      "Arguments": {
+        "Position": [0, 0],
+        "Text": "<-",
+        "Func_args": [0]
+      }
+    },
+    "CreateRoomCamera": {
+      "Type": "CommonCamera",
+      "Arguments": {
+        "Position": [0, 0],
+        "Mode": "Static",
+        "Targeting_position": [0, 0]
+      }
+    },
+    "CreateRoomText": {
+      "Type": "CommonText",
+      "Arguments": {
+        "Position": [450, 0],
+        "Text": "Create Room",
+        "Color": "white",
+        "Size": 35
+      }
+    },
+    "CreateRoomBackground": {
+      "Type": "MenuScreen",
+      "Arguments": {
+        "Position": [0, 0]
+      }
+    },
+    "Z_CreateRoomButton": {
+      "Type": "SquareButton",
+      "Arguments": {
+        "Position": [608, 284],
+        "Text": "Create",
+        "Func_args": [],
+        "Func_name": "create_room"
+      }
+    },
+    "Settings": {
+      "Type": "CommonScene",
+      "Arguments": {
+        "Game_objects": ["SettingsCamera", "SettingsBackground", "SettingsText", "SettingsButton", "TextBoxPlayerName"],
+        "Is_online_mode": false,
+        "Current_camera_name": "SettingsCamera"
+      }
+    },
+    "SettingsButton": {
+      "Type": "SquareButton",
+      "Arguments": {
+        "Position": [0, 0],
+        "Text": "<-",
+        "Func_args": [0]
+      }
+    },
+    "SettingsCamera": {
+      "Type": "CommonCamera",
+      "Arguments": {
+        "Position": [0, 0],
+        "Mode": "Static",
+        "Targeting_position": [0, 0]
+      }
+    },
+    "SettingsText": {
+      "Type": "CommonText",
+      "Arguments": {
+        "Position": [230, 200],
+        "Text": "Nickname:",
+        "Color": "white",
+        "Size": 40
+      }
+    },
+    "SettingsBackground": {
+      "Type": "MenuScreen",
+      "Arguments": {
+        "Position": [0, 0]
+      }
+    },
     "JoinRoom": {
       "Type": "CommonScene",
       "Arguments": {
@@ -173,7 +266,9 @@
     "JoinRoomRoomLabel": {
       "Type": "CommonRoomLabel",
       "Arguments": {
-        "Position": [533, 259]
+        "Position": [533, 259],
+        "Text_box_name": "TextBoxPlayerName",
+        "Text_box_scene_name": "Settings"
       }
    },
    "JoinRoomButtonUpdate": {
@@ -185,93 +280,7 @@
         "Func_name": "update_room_label"
       }
    },
-   "CreateRoom": {
-      "Type": "CommonScene",
-      "Arguments": {
-        "Game_objects": ["CreateRoomCamera", "CreateRoomText", "CreateRoomText","CreateRoomButton", "CreateRoomBackground"],
-        "Is_online_mode": false,
-        "Current_camera_name": "CreateRoomCamera"
-      }
-    },
-    "CreateRoomButton": {
-      "Type": "SquareButton",
-      "Arguments": {
-        "Position": [0, 0],
-        "Text": "<-",
-        "Func_args": [0]
-      }
-    },
-    "CreateRoomCamera": {
-      "Type": "CommonCamera",
-      "Arguments": {
-        "Position": [0, 0],
-        "Mode": "Static",
-        "Targeting_position": [0, 0]
-      }
-    },
-    "CreateRoomText": {
-      "Type": "CommonText",
-      "Arguments": {
-        "Position": [450, 0],
-        "Text": "Create Room",
-        "Color": "white",
-        "Size": 35
-      }
-    },
-    "CreateRoomBackground": {
-      "Type": "MenuScreen",
-      "Arguments": {
-        "Position": [0, 0]
-      }
-    },
-    "CreateRoomButton": {
-      "Type": "SquareButton",
-      "Arguments": {
-        "Position": [608, 284],
-        "Text": "Create",
-        "Func_args": [],
-        "Func_name": "create_room"
-      }
-    },
-    "Settings": {
-      "Type": "CommonScene",
-      "Arguments": {
-        "Game_objects": ["SettingsCamera", "SettingsBackground", "SettingsText", "SettingsButton"],
-        "Is_online_mode": false,
-        "Current_camera_name": "SettingsCamera"
-      }
-    },
-    "SettingsButton": {
-      "Type": "SquareButton",
-      "Arguments": {
-        "Position": [0, 0],
-        "Text": "<-",
-        "Func_args": [0]
-      }
-    },
-    "SettingsCamera": {
-      "Type": "CommonCamera",
-      "Arguments": {
-        "Position": [0, 0],
-        "Mode": "Static",
-        "Targeting_position": [0, 0]
-      }
-    },
-    "SettingsText": {
-      "Type": "CommonText",
-      "Arguments": {
-        "Position": [230, 300],
-        "Text": "Nickname: Player",
-        "Color": "white"
-      }
-    },
-    "SettingsBackground": {
-      "Type": "MenuScreen",
-      "Arguments": {
-        "Position": [0, 0]
-      }
-    },
-    "Level1": {
+   "Level1": {
       "Type": "CommonScene",
       "Arguments": {
         "Game_objects": ["Level1Player", "Level1Player_fov", "Level1Input", "Level1FpsCounter", "A_Level1MapWorld", "Level1Button", "Level1Coin"],
@@ -325,7 +334,7 @@
         "Color": "black",
         "Radius": 100,
         "Border_radius": 10,
-        "Touching_zone_box": [0, 0, 500, 768],
+        "Touching_zone_box": [0, 468, 300, 300],
         "Hot_keys": {
           "PLAYER_UP": "W",
           "PLAYER_LEFT": "A",
@@ -343,10 +352,10 @@
     "Room": {
       "Type": "CommonScene",
       "Arguments": {
-        "Game_objects": ["Block", "Player_fov", "A_MapWorld", "Input", "KeyBoardForComputers", "FpsCounter", "OnlineModeViewer", "ExitButton"],
+        "Game_objects": ["Block", "Player_fov", "Input", "KeyBoardForComputers", "FpsCounter", "OnlineModeViewer", "ExitButton", "PlayerInventory"],
         "Player_controller_game_object_name": "Input",
         "Is_online_mode": true,
-        "Tilemap_name": "A_MapWorld"
+        "Player_inventory_name": "PlayerInventory"
       }
     },
     "Block": {
@@ -363,13 +372,6 @@
         "Target_game_object_name": "Block"
       }
     },
-    "A_MapWorld": {
-      "Type": "CommonTilemap",
-      "Arguments": {
-        "Position": [0, 0],
-        "TileMap_name": "Sandbox"
-      }
-    },
     "Input": {
       "Type": "CommonInput",
       "Arguments": {
@@ -377,7 +379,13 @@
         "Color": "black",
         "Radius": 100,
         "Border_radius": 10,
-        "Touching_zone_box": [0, 0, 500, 768],
+        "Touching_zone_box": [0, 468, 300, 300],
+        "Hot_keys": {
+          "PLAYER_UP": "W",
+          "PLAYER_LEFT": "A",
+          "PLAYER_DOWN": "S",
+          "PLAYER_RIGHT": "D"
+        },
         "Is_only_for_smartphones": false
       }
     },
@@ -413,6 +421,12 @@
         "Text": "Exit",
         "Func_name": "exit_from_room",
         "Func_args": []
+      }
+    },
+    "PlayerInventory": {
+      "Type": "CommonInventory",
+      "Arguments": {
+        "Position": [508,643]
       }
     }
   }

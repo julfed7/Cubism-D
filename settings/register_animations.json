@@ -35,6 +35,18 @@
         "Frames": 1,
         "Ticks": [3600]
       }
+    },
+    "Zombie": {
+      "Default": {
+        "Frames": 1,
+        "Ticks": [3600]
+      }
+    },
+    "Pickaxe": {
+      "Default": {
+        "Frames": 1,
+        "Ticks": [3600]
+      }
     }
   }
 }

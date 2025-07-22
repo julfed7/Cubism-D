@@ -11,6 +11,11 @@
       "Animation_name": "Player",
       "Speed": 200
     },
+    "Zombie": {
+      "Type": "Entity",
+      "Animation_name": "Zombie",
+      "Speed": 200
+    },
     "Grass": {
       "Type": "Wall",
       "Animation_name": "Grass",
@@ -24,6 +29,15 @@
     "MenuScreen": {
       "Type": "Wall",
       "Animation_name": "Menu_screen"
+    },
+    "CommonInventory": {
+      "Type": "Inventory",
+      "Animation_name": "Camera",
+      "Color": "black",
+      "item_image_ids": {
+        "0": "camera_default1.png",
+        "1": "pickaxe.png"
+      }
     },
     "CommonScene": {
       "Type": "Scene",
@@ -119,9 +133,22 @@
       "Type": "RoomLabel",
       "Animation_name": "Camera",
       "Not_animated": true,
-      "Animation_is_alpha": true,
+      "Animation_is_alpha": false,
       "Width": 300,
       "Height": 250
+    },
+    "CommonTextBox": {
+      "Type": "TextBox",
+      "Animation_name": "Camera",
+      "Not_animated": true,
+      "Width": 800,
+      "Height": 70,
+      "Color": "grey",
+      "Border_color": "black",
+      "Border_radius": 5,
+      "Size": 19,
+      "Space_signaling_time": 10,
+      "Max_count_symbols": 18
     }
   }
 }
