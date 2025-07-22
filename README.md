@@ -7,4 +7,4 @@ link to play:
 https://julfed.itch.io/cubism-d
 
 Current task:
-Make players's nickname view
+Make combat for players
