@@ -4,7 +4,6 @@ import json
 import pygame
 import math
 import asyncio
-import tornado
 from functools import wraps
 
 def resource_path(relative):
