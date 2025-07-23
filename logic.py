@@ -120,12 +120,12 @@ class Game:
               except BrokenPipeError:
               	pass
         try:
-          	data = self.itinerarium.recv(1024)
+          	data = self.itinerarium.recv(2048)
           	packet = data.decode()
           	start_slace = packet.find("{")
           	end_slace = packet.find("}{")
           	if end_slace == -1:
-          			end_slace = packet.rfind("}")
+          		end_slace = packet.rfind("}")
           	packet = packet[start_slace:end_slace+1]
           	if not packet:
           			packet = "{'event_bus':[], 'ticks':0}"
@@ -145,7 +145,7 @@ class Game:
           			event_name = event[0]
           			event_data = event[1]
           			
-          			print(event_name, event_data)
+          			#print(event_name, event_data)
           				
           			if event_name == "Your ID":
           				self.my_id = event_data[0]
@@ -230,8 +230,7 @@ class Game:
           							game_object.nickname = data[1][str(current_scene.my_player_id)][3]
           							game_object.inventory = current_scene.player_inventory
           							current_scene.player_inventory.player = game_object
-          						elif type_ == "Zombie":
-          							game_object = copy.copy(self.game_object_types["Zombie"])
+          							current_scene.player_hp.player = game_object
           						game_object.name = "Z"+str(current_scene.my_player_id)
           						game_object.id = current_scene.my_player_id
           						game_object.type_id = self.SELF_PLAYER_TYPE_ID
@@ -289,6 +288,7 @@ class Game:
           								current_scene.game_objects["Z"+str(game_object_id)].inventory_data = data[1][str(game_object_id)][4]
           							elif len(data[1][str(game_object_id)]) >= 6:
           								current_scene.game_objects["Z"+str(game_object_id)].hand_item_type = data[1][str(game_object_id)][5]
+          							current_scene.game_objects["Z"+str(game_object_id)].hp = data[1][str(game_object_id)][6]
           						elif type_ == "Tilemap":
           							TileMap.config_tilemaps["TileMaps"][current_scene.game_objects["Z"+str(game_object_id)].tilemap_name] = data[1][str(game_object_id)][3]
           							for edited_chunk in data[1][str(game_object_id)][4]:
@@ -345,12 +345,14 @@ class Game:
         current_scene.player_game_object_name = None
         current_scene.current_player_game_object = None
         removing_game_objects = []
+        
         for game_object_name in current_scene.game_objects:
          	game_object = current_scene.game_objects[game_object_name]
          	if game_object.is_online_mode:
          		removing_game_objects.append(game_object)
         for removing_game_object in removing_game_objects:
          	current_scene.remove_game_object(game_object)
+         
         self.change_current_scene(0)
         self.current_event.append(["Leave room", []])
         
@@ -360,7 +362,7 @@ class Game:
 
 
 class Scene:
-    __slots__ = ["type", "name", "game_objects", "entities", "walls", "sprite_group", "game", "current_camera", "current_camera_name", "current_player_game_object", "player_game_object_name", "player_controller_game_object", "player_controller_game_object_name", "is_online_mode", "my_player_id", "tilemap_name", "tilemap", "not_animated", "camera", "game_objects_", "room_label_name", "room_label", "game_objects_data", "player_inventory", "player_inventory_name", "items"]
+    __slots__ = ["type", "name", "game_objects", "entities", "walls", "sprite_group", "game", "current_camera", "current_camera_name", "current_player_game_object", "player_game_object_name", "player_controller_game_object", "player_controller_game_object_name", "is_online_mode", "my_player_id", "tilemap_name", "tilemap", "not_animated", "camera", "game_objects_", "room_label_name", "room_label", "game_objects_data", "player_inventory", "player_inventory_name", "items", "player_hp", "player_hp_name", "ticks"]
     def __init__(self):        
         self.type = None
         
@@ -413,6 +415,12 @@ class Scene:
         self.player_inventory = None
         
         self.player_inventory_name = None
+        
+        self.player_hp = None
+        
+        self.player_hp_name = None
+        
+        self.ticks = 0
 
     def setup(self):
         if self.player_controller_game_object_name:
@@ -425,6 +433,8 @@ class Scene:
         	self.room_label = self.game_objects[self.room_label_name]
         if self.player_inventory_name is not None:
         	self.player_inventory = self.game_objects[self.player_inventory_name]
+        if self.player_hp_name is not None:
+        	self.player_hp = self.game_objects[self.player_hp_name]
         
     def add_game_object(self, new_game_object):
          new_game_object.camera = self.current_camera
@@ -454,6 +464,12 @@ class Scene:
 	        elif isinstance(old_game_object, Item):
 	        	self.items.remove(old_game_object)
     def tick(self, delta_time, changed_virtual_screen_position):
+            if self.ticks % 300 == 0:
+	            game_objects = list(self.game_objects.values())
+	            if self.player_inventory not in game_objects and self.player_inventory is not None:
+	            	self.add_game_object(self.player_inventory)
+	            if self.player_controller_game_object not in game_objects and self.player_controller_game_object is not None:
+	            	self.add_game_object(self.player_controller_game_object)
             if self.my_player_id is not None:
             		if "Z"+str(self.my_player_id) in self.game_objects:
             			self.player_game_object_name = "Z"+str(self.my_player_id)
@@ -479,6 +495,7 @@ class Scene:
             	pass
             for removing_game_object in removing_game_objects:
             	self.remove_game_object(removing_game_object)
+            self.ticks += 1
 
 class GameObject(pygame.sprite.Sprite):
     __slots__ = ["type", "animation_name", "name", "position", "ticks", "last_frame_flip_ticks", "animation_ticks", "animation_current_frame", "state", "animation_frame_images", "image", "rect", "camera", "scene", "is_only_for_smartphones", "is_online_mode", "events", "id",  "is_gui", "animation_is_alpha", "not_animated", "is_rendered"]
@@ -587,6 +604,7 @@ class Entity(GameObject):
     def __init__(self, *args):
     	super().__init__(*args)
     	self.speed = 0
+    	self.hp = 0
     	self.velocity = [0, 0]
     	self.mode = "Default"
     	self.teleport_zone = [0, 450, 0, 450]
@@ -597,6 +615,7 @@ class Entity(GameObject):
     	self.inventory_data = [0, 0, 0]
     	self.inventory = None
     	self.hand_item_type = self.inventory_data[0]
+    	self.delta_time = 0
     	
     def setup(self, *args):
     	super().setup(*args)
@@ -633,7 +652,7 @@ class Entity(GameObject):
 	    			
     	if self.is_moved and self.velocity != [0,0]:
 	    	if self.type_id == self.scene.game.SELF_PLAYER_TYPE_ID:
-	    		self.events.append(["Game object state changed", [2, self.id, [0,0], self.position, self.type_id, self.nickname, self.inventory_data, self.hand_item_type]])
+	    		self.events.append(["Game object state changed", [2, self.id, [0,0], self.position, self.type_id, self.nickname, self.inventory_data, self.hand_item_type, self.hp]])
 	    	self.is_moved = False
     
     def move(self, direction):
@@ -675,7 +694,7 @@ class Entity(GameObject):
     			self.rect.y = self.position[1] - self.camera.position[1]
     	
     	if self.type_id == self.scene.game.SELF_PLAYER_TYPE_ID:
-    		self.events.append(["Game object state changed", [2, self.id, self.velocity, self.position, self.type_id, self.nickname, self.inventory_data]])
+    		self.events.append(["Game object state changed", [2, self.id, self.velocity, self.position, self.type_id, self.nickname, self.inventory_data, self.hand_item_type, self.hp]])
     		
     	self.is_moved = True
     	
@@ -1123,7 +1142,8 @@ class Text(GameObject):
 					self.rendered_text_size = self.rendered_text.get_size()
 					self.scene.game.draw_rects.append(self.rect)
 		elif self.mode == "OnlineModeViewer":
-			if str(self.scene.game.is_online_mode) != self.text:
+			current_scene = self.scene.game.get_scene()
+			if str(current_scene.is_online_mode) != self.text:
 				self.rendered_text = self.font.render(self.text, self.color, True)
 				self.rendered_text_size = self.rendered_text.get_size()
 				self.scene.game.draw_rects.append(self.rect)
@@ -1147,13 +1167,32 @@ class RoomLabel(GameObject):
 		self.current_text_box = None
 		self.text_box_name = None
 		self.text_box_scene_name = None
+		self.buttons_rects = []
+		self.buttons_names = []
+		self.buttons_func_args = []
+		self.buttons_rendered_names = []
+		self.font = None
 		
 	def update_room_label(self, rooms):
 		count_buttons = len(rooms)
 		self.buttons = []
 		self.count_buttons = 0
+		"""
 		for i in range(count_buttons):
 			self.create_button(rooms[i], [rooms[i], self.current_text_box.text])
+			self.count_buttons += 1
+		"""
+		self.buttons_rects = []
+		self.buttons_names = []
+		self.buttons_func_args = []
+		self.buttons_rendered_names = []
+		for i in range(count_buttons):
+			button_rect = pygame.Rect(self.position[0], self.position[1]+self.count_buttons*50, 300, 50)
+			self.buttons_rects.append(button_rect)
+			self.buttons_names.append(rooms[i])
+			self.buttons_func_args.append(rooms[i])
+			rendered_name = self.font.render(self.buttons_names[-1], "black", False)
+			self.buttons_rendered_names.append(rendered_name)
 			self.count_buttons += 1
 		
 	def create_button(self, text, func_args):
@@ -1179,12 +1218,21 @@ class RoomLabel(GameObject):
 		if self.text_box_name is not None and self.text_box_scene_name is not None:
 			scene = self.scene.game.scenes[self.text_box_scene_name]
 			self.current_text_box = scene.game_objects[self.text_box_name]
+		self.font = pygame.font.SysFont("Ariel", 50)
 			
 	def tick(self, *args):
 		super().tick(*args)
 		pygame.draw.rect(self.scene.game.screen, "black", [self.position[0],self.position[1], self.width, self.height], self.border_radius)
 		for button in self.buttons:
 			button.tick(*args)
+		mouse_position = self.scene.game.get_mouse_pos()
+		for i, button_rect in enumerate(self.buttons_rects):
+			pygame.draw.rect(self.scene.game.screen, "white", button_rect)
+			pygame.draw.rect(self.scene.game.screen, "black", button_rect, 5)
+			button_rendered_name_size = self.buttons_rendered_names[i].get_size()
+			self.scene.game.screen.blit(self.buttons_rendered_names[i], [button_rect.centerx-button_rendered_name_size[0]/2, button_rect.y])
+			if pygame.mouse.get_pressed()[0] and button_rect.collidepoint(mouse_position):
+				self.scene.game.join_room(self.buttons_func_args[i], self.current_text_box.text)
 		self.position = self.old_position
 
 
@@ -1355,6 +1403,7 @@ class Inventory(GameObject):
 			self.item_images = {}
 			self.hand_item_images = {}
 			self.inventory_box_rect = None
+			self.is_online_mode = False
 		def setup(self, *args):
 			super().setup(*args)
 			self.box_image = pygame.Surface((self.box_size,self.box_size))
@@ -1386,7 +1435,7 @@ class Inventory(GameObject):
 			if self.player is not None:	
 				if self.player.hand_item_type != self.player.inventory_data[self.choosed_box_index]:
 						self.player.hand_item_type = self.player.inventory_data[self.choosed_box_index]
-						self.player.events.append(["Game object state changed", [7, self.player.id, self.player.velocity, self.player.position, self.player.type_id, self.player.nickname, self.player.inventory_data, self.player.hand_item_type]])
+						self.player.events.append(["Game object state changed", [7, self.player.id, self.player.velocity, self.player.position, self.player.type_id, self.player.nickname, self.player.inventory_data, self.player.hand_item_type, self.player.hp]])
 					
 			if mouse_is_pressed and self.pick_up_box_rect.collidepoint(mouse_position):
 					min_distance = 100
@@ -1411,7 +1460,33 @@ class Inventory(GameObject):
 			pygame.draw.rect(self.scene.game.screen, "green", self.pick_up_box_rect)
 			
 			pygame.draw.rect(self.scene.game.screen, "red", self.throw_away_box_rect)
-		
+
+class Hp(GameObject):
+	def __init__(self, *args):
+		super().__init__(*args)
+		self.position = [0, 0]
+		self.player = None
+		self.width = 0
+		self.height = 0
+		self.visible_width = self.width
+		self.max_player_hp = 10
+		self.last_player_hp = self.max_player_hp
+		self.color = "red"
+		self.is_gui = True
+
+	def setup(self, *args):
+		super().setup(*args)
+		self.rect = pygame.Rect(self.position[0], self.position[1], self.width, self.visible_width)
+			
+	def tick(self, *args):
+		super().tick(*args)
+		if self.player is not None:
+			if self.player.hp != self.last_player_hp:
+				self.visible_width = self.player.hp/self.max_player_hp*self.width
+				self.rect = pygame.Rect(self.position[0], self.position[1], self.visible_width, self.height)
+			self.last_player_hp = self.player.hp
+		pygame.draw.rect(self.scene.game.screen, self.color, self.rect)
+
 class Intro(GameObject):
 	def __init__(self, *args):
 		super().__init__(*args)

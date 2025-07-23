@@ -140,7 +140,8 @@ async def main():
 	  "Intro": logic.Intro,
 	  "RoomLabel": logic.RoomLabel,
 	  "TextBox": logic.TextBox,
-	  "Inventory": logic.Inventory
+	  "Inventory": logic.Inventory,
+	  "Hp": logic.Hp
 	}
 	
 	game_object_types = {}
