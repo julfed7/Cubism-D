@@ -352,10 +352,11 @@
     "Room": {
       "Type": "CommonScene",
       "Arguments": {
-        "Game_objects": ["Block", "Player_fov", "Input", "KeyBoardForComputers", "FpsCounter", "OnlineModeViewer", "ExitButton", "PlayerInventory"],
-        "Player_controller_game_object_name": "Input",
+        "Game_objects": ["Block", "Player_fov", "Z_Input", "KeyBoardForComputers", "FpsCounter", "OnlineModeViewer", "Z_ExitButton", "Z_PlayerInventory", "Z_PlayerHp"],
+        "Player_controller_game_object_name": "Z_Input",
         "Is_online_mode": true,
-        "Player_inventory_name": "PlayerInventory"
+        "Player_inventory_name": "Z_PlayerInventory",
+        "Player_hp_name": "Z_PlayerHp"
       }
     },
     "Block": {
@@ -372,7 +373,7 @@
         "Target_game_object_name": "Block"
       }
     },
-    "Input": {
+    "Z_Input": {
       "Type": "CommonInput",
       "Arguments": {
         "Position": [200, 600],
@@ -414,7 +415,7 @@
         "Position": [0, 50]
       }
     },
-    "ExitButton": {
+    "Z_ExitButton": {
       "Type": "SquareButton",
       "Arguments": {
         "Position": [1216, 0],
@@ -423,10 +424,16 @@
         "Func_args": []
       }
     },
-    "PlayerInventory": {
+    "Z_PlayerInventory": {
       "Type": "CommonInventory",
       "Arguments": {
         "Position": [508,643]
+      }
+    },
+    "Z_PlayerHp": {
+      "Type": "CommonHp",
+      "Arguments": {
+        "Position": [508, 623]
       }
     }
   }
