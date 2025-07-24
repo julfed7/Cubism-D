@@ -145,7 +145,7 @@ class Game:
           			event_name = event[0]
           			event_data = event[1]
           			
-          			#print(event_name, event_data)
+          			print(event_name, event_data)
           				
           			if event_name == "Your ID":
           				self.my_id = event_data[0]
@@ -250,8 +250,15 @@ class Game:
           							game_object.mode = "Player"
           							game_object.nickname = data[1][str(game_object_id)][3]
           							game_object.inventory_data = data[1][str(game_object_id)][4]
+          							game_object.hand_item_type = data[1][str(game_object_id)][5]
+          							game_object.hp = data[1][str(game_object_id)][6]
           						elif type_ == "Zombie":
           							game_object = copy.copy(self.game_object_types["Zombie"])
+          							game_object.mode = "Zombie"
+          							game_object.nickname = data[1][str(game_object_id)][3]
+          							game_object.inventory_data = data[1][str(game_object_id)][4]
+          							game_object.hand_item_type = data[1][str(game_object_id)][5]
+          							game_object.hp = data[1][str(game_object_id)][6]
           						elif type_ == "Item":
           							game_object = Item()
           							items_animations = {
@@ -284,10 +291,8 @@ class Game:
           						current_scene.game_objects["Z"+str(game_object_id)].velocity = data[1][str(game_object_id)][1]
           						type_ = data[1][str(game_object_id)][2]
           						if type_ == "Player":
-          							if len(data[1][str(game_object_id)]) >= 5:
-          								current_scene.game_objects["Z"+str(game_object_id)].inventory_data = data[1][str(game_object_id)][4]
-          							elif len(data[1][str(game_object_id)]) >= 6:
-          								current_scene.game_objects["Z"+str(game_object_id)].hand_item_type = data[1][str(game_object_id)][5]
+          							current_scene.game_objects["Z"+str(game_object_id)].inventory_data = data[1][str(game_object_id)][4]
+          							current_scene.game_objects["Z"+str(game_object_id)].hand_item_type = data[1][str(game_object_id)][5]
           							current_scene.game_objects["Z"+str(game_object_id)].hp = data[1][str(game_object_id)][6]
           						elif type_ == "Tilemap":
           							TileMap.config_tilemaps["TileMaps"][current_scene.game_objects["Z"+str(game_object_id)].tilemap_name] = data[1][str(game_object_id)][3]
@@ -647,8 +652,12 @@ class Entity(GameObject):
 	    			mouse_position = self.scene.game.get_mouse_pos()
 	    			offset_position = [mouse_position[0]-self.scene.game.virtual_screen_size[0]/2, mouse_position[1]-self.scene.game.virtual_screen_size[1]/2]
 	    			touched_position = [self.position[0]+offset_position[0], self.position[1]+offset_position[1]]
-	    			if self.hand_item_type != 0 and not self.scene.player_controller_game_object.touching_zone_box_rect.collidepoint(mouse_position) and not self.scene.player_inventory.inventory_box_rect.collidepoint(mouse_position):
-	    				self.events.append(["Item used", [touched_position]])
+	    			if self.hand_item_type != 0 and not self.scene.player_inventory.inventory_box_rect.collidepoint(mouse_position):
+	    				if self.scene.game.ENVIRONMENT_OS == "Android":
+	    					if not self.scene.player_controller_game_object.touching_zone_box_rect.collidepoint(mouse_position):
+	    						self.events.append(["Item used", [touched_position]])
+	    				else:
+	    					self.events.append(["Item used", [touched_position]])
 	    			
     	if self.is_moved and self.velocity != [0,0]:
 	    	if self.type_id == self.scene.game.SELF_PLAYER_TYPE_ID:
