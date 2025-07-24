@@ -120,7 +120,7 @@ class Game:
               except BrokenPipeError:
               	pass
         try:
-          	data = self.itinerarium.recv(2048)
+          	data = self.itinerarium.recv(4096)
           	packet = data.decode()
           	start_slace = packet.find("{")
           	end_slace = packet.find("}{")
@@ -263,7 +263,8 @@ class Game:
           							game_object = Item()
           							items_animations = {
           							  0: "Camera",
-          							  1: "Pickaxe"
+          							  1: "Pickaxe",
+          							  2: "Sword"
           							}
           							try:
           								game_object.animation_name = items_animations[data[1][str(game_object_id)][3]]
@@ -628,7 +629,8 @@ class Entity(GameObject):
     	self.rendered_text = self.font.render(self.nickname, True, "black")
     	
     def tick(self, *args):
-    	super().tick(*args)
+    	if not self.hp <= 0:
+    		super().tick(*args)
     	self.position[0] += self.velocity[0] * self.speed * self.delta_time
     	self.position[1] += self.velocity[1] * self.speed * self.delta_time
     	if self.mode == "Coin":
@@ -643,7 +645,7 @@ class Entity(GameObject):
 	    		if collided_rect_index != -1:
 	    			self.position[0] = random.randint(self.teleport_zone[0], self.teleport_zone[1])
 	    			self.position[1] = random.randint(self.teleport_zone[2], self.teleport_zone[3])
-    	elif self.mode == "Player":
+    	elif self.mode == "Player" and not self.hp <= 0:
 	    	self.scene.game.screen.blit(self.rendered_text, [self.rect.x-len(self.nickname), self.rect.y-len(self.nickname)])
 	    	self.scene.game.screen.blit(self.scene.player_inventory.hand_item_images[str(self.hand_item_type)], [self.rect.right, self.rect.centery])
 	    	if self.type_id == self.scene.game.SELF_PLAYER_TYPE_ID:
