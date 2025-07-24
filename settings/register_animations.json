@@ -47,6 +47,12 @@
         "Frames": 1,
         "Ticks": [3600]
       }
+    },
+    "Sword": {
+      "Default": {
+        "Frames": 1,
+        "Ticks": [3600]
+      }
     }
   }
 }

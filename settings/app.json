@@ -22,7 +22,7 @@
 
     "Camera_game_object_name": "Player_fov",
 
-    "IP": ["localhost", 21123],
+    "IP": ["192.168.0.5", 21123],
 
     "Text_box_scene_name": "Settings",
 
