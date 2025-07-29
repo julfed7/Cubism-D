@@ -308,7 +308,7 @@
     "Level1Player": {
       "Type": "Player",
       "Arguments": {
-        "Position": [0, 0]
+        "Position": [-50, -50]
       }
     },
     "Level1Player_fov": {
@@ -352,7 +352,7 @@
     "Room": {
       "Type": "CommonScene",
       "Arguments": {
-        "Game_objects": ["Block", "Player_fov", "Z_Input", "KeyBoardForComputers", "FpsCounter", "OnlineModeViewer", "Z_ExitButton", "Z_PlayerInventory", "Z_PlayerHp"],
+        "Game_objects": ["Block", "Player_fov", "Z_Input", "KeyBoardForComputers", "Z_FpsCounter", "Z_OnlineModeViewer", "Z_ExitButton", "Z_PlayerInventory", "Z_PlayerHp"],
         "Player_controller_game_object_name": "Z_Input",
         "Is_online_mode": true,
         "Player_inventory_name": "Z_PlayerInventory",
@@ -403,13 +403,13 @@
         "Is_only_for_smartphones": false
       }
     },
-    "FpsCounter": {
+    "Z_FpsCounter": {
       "Type": "CommonFpsCounter",
       "Arguments": {
         "Position": [0, 0]
       }
     },
-    "OnlineModeViewer": {
+    "Z_OnlineModeViewer": {
       "Type": "CommonOnlineModeViewer",
       "Arguments": {
         "Position": [0, 50]

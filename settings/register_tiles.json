@@ -156,7 +156,7 @@
     "153":"redstone_block",
     "154":"redstone_ore",
     "155":"spruce_planks",
-    "156":"stone",
+    "156":"spruce_log_top",
     "157":"stripped_mangrove_log_top",
     "158":"stripped_oak_log_top",
     "159":"stripped_warped_stem_top",
@@ -184,7 +184,7 @@
     "181":"sandstone_top",
     "182":"sand",
     "183":"sea_lantern",
-    "184":"spruce_log_top",
+    "184":"stone",
     "185":"stone_bricks",
     "186":"stripped_jungle_log_top",
     "187":"stripped_spruce_log_top"

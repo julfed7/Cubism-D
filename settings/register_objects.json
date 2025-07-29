@@ -4,7 +4,9 @@
       "Type": "Entity",
       "Animation_name": "PeaShooter",
       "Speed": 200,
-      "Type_id": 1
+      "Type_id": 1,
+      "Width": 50,
+      "Height": 50
     },
     "Cube": {
       "Type": "Entity",
@@ -14,7 +16,9 @@
     "Zombie": {
       "Type": "Entity",
       "Animation_name": "Zombie",
-      "Speed": 200
+      "Speed": 200,
+      "Width": 50,
+      "Height": 50
     },
     "Grass": {
       "Type": "Wall",
@@ -24,7 +28,8 @@
     "Player": {
       "Type": "Entity",
       "Animation_name": "Player",
-      "Speed": 200
+      "Speed": 200,
+      "Hp": 10
     },
     "MenuScreen": {
       "Type": "Wall",
@@ -37,7 +42,9 @@
       "item_image_ids": {
         "0": "camera_default1.png",
         "1": "pickaxe.png",
-        "2": "sword.png"
+        "2": "sword.png",
+        "3": "gun.png",
+        "4": "coin.png"
       }
     },
     "CommonHp": {

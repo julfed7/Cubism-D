@@ -53,6 +53,24 @@
         "Frames": 1,
         "Ticks": [3600]
       }
+    },
+    "Gun": {
+      "Default": {
+        "Frames": 1,
+        "Ticks": [3600]
+      }
+    },
+    "Bullet": {
+      "Default": {
+        "Frames": 1,
+        "Ticks": [3600]
+      }
+    },
+    "Bariga": {
+      "Default": {
+        "Frames": 1,
+        "Ticks": [3600]
+      }
     }
   }
 }
