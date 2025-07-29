@@ -120,7 +120,7 @@ class Game:
               except BrokenPipeError:
               	pass
         try:
-          	data = self.itinerarium.recv(4096)
+          	data = self.itinerarium.recv(65536)
           	packet = data.decode()
           	start_slace = packet.find("{")
           	end_slace = packet.find("}{")
@@ -144,8 +144,8 @@ class Game:
           	for event in response["event_bus"]:
           			event_name = event[0]
           			event_data = event[1]
-          			
-          			print(event_name, event_data)
+          			if self.ticks % 60 == 0:
+          				print(event_name, event_data)
           				
           			if event_name == "Your ID":
           				self.my_id = event_data[0]
@@ -221,7 +221,11 @@ class Game:
           				data = event_data[0]
           				current_scene.game_objects_data = data
           				if current_scene.my_player_id is not None:
-          					type_ = data[1][str(current_scene.my_player_id)][2]
+          					try:
+          						type_ = data[1][str(current_scene.my_player_id)][2]
+          					except KeyError:
+          						self.change_current_scene(0)
+          					#type_ = "Player"
           				else:
           					type_ = None
           				if str(current_scene.my_player_id) in data[1] and "Z"+str(current_scene.my_player_id) not in current_scene.game_objects:
@@ -264,7 +268,9 @@ class Game:
           							items_animations = {
           							  0: "Camera",
           							  1: "Pickaxe",
-          							  2: "Sword"
+          							  2: "Sword",
+          							  3: "Gun",
+          							  4: "Coin"
           							}
           							try:
           								game_object.animation_name = items_animations[data[1][str(game_object_id)][3]]
@@ -277,6 +283,13 @@ class Game:
           							game_object = TileMap()
           							game_object.animation_name = "Camera"
           							game_object.tilemap_name = f"Z_{game_object_id}"
+          						elif type_ == "Bullet":
+          							game_object = Bullet()
+          						elif type_ == "Bariga":
+          							game_object = Bariga()
+          							game_object.required_item_type = data[1][str(game_object_id)][3]
+          							game_object.required_quantity = data[1][str(game_object_id)][4]
+          							game_object.given_item_type = data[1][str(game_object_id)][5]
           						game_object.name = "Z"+str(game_object_id)
           						game_object.id = game_object_id
           						game_object.position = data[1][str(game_object_id)][0]
@@ -299,6 +312,10 @@ class Game:
           							TileMap.config_tilemaps["TileMaps"][current_scene.game_objects["Z"+str(game_object_id)].tilemap_name] = data[1][str(game_object_id)][3]
           							for edited_chunk in data[1][str(game_object_id)][4]:
           								current_scene.game_objects["Z"+str(game_object_id)].edit_chunk(edited_chunk[0], edited_chunk[1])
+          						elif type_ == "Bariga":
+          							current_scene.game_objects["Z"+str(game_object_id)].required_item_type = data[1][str(game_object_id)][3]
+          							current_scene.game_objects["Z"+str(game_object_id)].required_quantity = data[1][str(game_object_id)][4]
+          							current_scene.game_objects["Z"+str(game_object_id)].given_item_type = data[1][str(game_object_id)][5]
           						"""
           						if game_object_id != current_scene.my_player_id:
           						"""
@@ -330,6 +347,8 @@ class Game:
         
     def change_current_scene(self, index):
         self.current_scene = index
+        current_scene = self.get_scene()
+        current_scene.ticks = 0
         #self.screen.fill((255,255,255))
     
     def join_room(self, room_name, nickname):
@@ -470,6 +489,15 @@ class Scene:
 	        elif isinstance(old_game_object, Item):
 	        	self.items.remove(old_game_object)
     def tick(self, delta_time, changed_virtual_screen_position):
+            """
+            if self.ticks == 0 and self.is_online_mode is True:
+            	removable_game_objects = []
+            	for game_object in list(self.game_objects.values()):
+            		if isinstance(game_object, TileMap):
+            			removable_game_objects.append(game_object)
+            	for removable_game_object in removable_game_objects:
+            		self.remove_game_object(removable_game_object
+            """
             if self.ticks % 300 == 0:
 	            game_objects = list(self.game_objects.values())
 	            if self.player_inventory not in game_objects and self.player_inventory is not None:
@@ -529,6 +557,8 @@ class GameObject(pygame.sprite.Sprite):
         self.animation_is_alpha = False
         self.not_animated = False
         self.is_rendered = False
+        self.width = None
+        self.height = None
     def tick(self, delta_time, changed_virtual_screen_position, screen, camera):
         self.screen = screen
         self.delta_time = delta_time
@@ -589,6 +619,8 @@ class GameObject(pygame.sprite.Sprite):
                 except FileNotFoundError:
                 	frame_path = sprites_folder_path+"/"+self.animation_name.lower()+"_"+animation_state.lower()+str(frame_number)+".jpg"
                 	frame_image = pygame.image.load(utils.path(frame_path))
+                if self.width is not None and self.height is not None:
+                	frame_image = pygame.transform.scale(frame_image, (self.width, self.height))
                 
                 if self.animation_is_alpha:
                 	frame_image.convert_alpha()
@@ -647,7 +679,8 @@ class Entity(GameObject):
 	    			self.position[1] = random.randint(self.teleport_zone[2], self.teleport_zone[3])
     	elif self.mode == "Player" and not self.hp <= 0:
 	    	self.scene.game.screen.blit(self.rendered_text, [self.rect.x-len(self.nickname), self.rect.y-len(self.nickname)])
-	    	self.scene.game.screen.blit(self.scene.player_inventory.hand_item_images[str(self.hand_item_type)], [self.rect.right, self.rect.centery])
+	    	if self.scene.player_inventory is not None:
+	    		self.scene.game.screen.blit(self.scene.player_inventory.hand_item_images[str(self.hand_item_type)], [self.rect.right, self.rect.centery])
 	    	if self.type_id == self.scene.game.SELF_PLAYER_TYPE_ID:
 	    		mouse_is_pressed = pygame.mouse.get_pressed()[0]
 	    		if mouse_is_pressed:
@@ -686,7 +719,7 @@ class Entity(GameObject):
     		collided_rect = rects[collided_rect_index]
     	except IndexError:
     		pass
-    	
+    	print(rects)
     	if collided_rect_index != -1:
     			self.position[0] -= self.speed * self.velocity[0] * self.delta_time
     			self.rect.x = self.position[0] - self.camera.position[0]
@@ -807,6 +840,7 @@ class TileMap(GameObject):
         self.old_rect_position = [0,0]
         self.player_chunk_x = 0
         self.player_chunk_y = 0
+        self.rects_optimization = False
         super().__init__(*args)
         
     def edit_chunk(self, chunk_id, tiles_ids):
@@ -818,11 +852,10 @@ class TileMap(GameObject):
                 chunk.image.blit(cls.tiles_images[tile_id], [x, y])
 
     def setup(self):
+
         super().setup()
     	
         cls = type(self)
-        
-        self.chunks = []
 
         tilemap_info = cls.config_tilemaps["TileMaps"][self.tilemap_name]
 
@@ -871,6 +904,7 @@ class TileMap(GameObject):
             tiles_ids = []
             chunk = Chunk(chunk_id, chunk_image, cls.chunk_size)
             self.chunks.append(chunk)
+
             for i in range(cls.chunk_size):
                 chunk_x = chunk_id%self.map_of_chunks_size
                 chunk_y = chunk_id//self.map_of_chunks_size
@@ -893,53 +927,83 @@ class TileMap(GameObject):
                 x = tile_index%cls.chunk_size*cls.tile_size
                 y = tile_index//cls.chunk_size*cls.tile_size
                 chunk_image.blit(cls.tiles_images[tile_id], [x, y])
+                
+                if not self.scene.is_online_mode and self.rects_optimization is True:
+	                if tile_id in objects_tiles_ids and tile_index not in united_tiles_indexs:
+	                	point_x1 = tile_index
+	                	point_x2 = point_x1
+	                	point_y = 0
+	                	next_tile_id = tiles_ids[point_x2+1]
+	                	while next_tile_id in objects_tiles_ids and point_x2+1 not in united_tiles_indexs:
+	                		point_x2 += 1
+	                		try:
+	                			next_tile_id = tiles_ids[point_x2]
+	                		except IndexError:
+	                			next_tile_id = 0
+	                	united_tiles_indexs += [index for index in range(point_x1, point_x2+1)]
+	                	while False not in [True if id in objects_tiles_ids and index not in united_tiles_indexs else False for index, id in enumerate(tiles_ids[point_x1:point_x2+1])]:
+	                	       point_y += 1
+	                	       point_x1 += point_y*cls.chunk_size
+	                	       point_x2 += point_y*cls.chunk_size
+	                	       if point_x1 > len(tiles_ids)-1:
+	                	       	point_x1 = len(tiles_ids)-1
+	                	       if point_x2 > len(tiles_ids)-1:
+	                	       	point_x2 = len(tiles_ids)-1
+	                	       point_y = int(point_y)
+	                	       point_x1 = int(point_x1)
+	                	       point_x2 = int(point_x2)
+	                	       united_tiles_indexs += [index for index in range(point_x1, point_x2+1)]
 
-                if tile_id in objects_tiles_ids and tile_index not in united_tiles_indexs:
-                	point_x1 = tile_index
-                	point_x2 = point_x1
-                	point_y = 0
-                	while tiles_ids[point_x2+1] in objects_tiles_ids and point_x2+1 not in united_tiles_indexs:
-                		point_x2 += 1
-                	united_tiles_indexs += [index for index in range(point_x1, point_x2+1)]
-                	while False not in [True if id in objects_tiles_ids and index not in united_tiles_indexs else False for index, id in enumerate(tiles_ids[point_x1:point_x2+1])]:
-                	       point_y += 1
-                	       point_x1 += point_y*cls.chunk_size
-                	       point_x2 += point_y*cls.chunk_size
-                	       if point_x1 > len(tiles_ids)-1:
-                	       	point_x1 = len(tiles_ids)-1
-                	       if point_x2 > len(tiles_ids)-1:
-                	       	point_x2 = len(tiles_ids)-1
-                	       point_y = int(point_y)
-                	       point_x1 = int(point_x1)
-                	       point_x2 = int(point_x2)
-                	       united_tiles_indexs += [index for index in range(point_x1, point_x2+1)]
-                	point_y -= 1
-                	width = (point_x2-point_x1+1)*cls.tile_size
-                	height = (point_y+1)*cls.tile_size
-                	x = tile_index%cls.chunk_size*cls.tile_size+chunk_id%self.map_of_chunks_size*cls.chunk_size*cls.tile_size
-                	y = tile_index//cls.chunk_size*cls.tile_size+chunk_id//self.map_of_chunks_size*cls.chunk_size*cls.tile_size
-                	rect = pygame.Rect(x, y, width, height)
-                	type_ = tiles_info[str(tile_id)]
-                	
-                	chunk.rects_position.append([x,y])
-                	chunk.rects.append(rect)
-                	
-                	arguments = copy.copy(register_objects_info[type_])
-                	arguments.pop("Type")
-                	arguments.update({"Name":self.tilemap_name+str(chunk_id)+str(tile_index)})
-                	arguments.update({"Position":[x, y]})
-                	game_object = copy.copy(cls.game_object_types[type_])
-                	for argument_name in arguments:
-                     	      		if hasattr(game_object, argument_name.lower()):
-                     	      			setattr(game_object, argument_name.lower(), arguments[argument_name])
-                	game_object.camera = self.camera
-                	game_object.scene = self.scene
-                	game_object.setup()
-                	if isinstance(game_object, Wall):
-                	    chunk.walls.add(game_object)
-                	else:
-                	    chunk.game_objects.append(game_object)
-  
+	                	width = (point_x2-point_x1+1)*cls.tile_size
+	                	height = (point_y+1)*cls.tile_size
+	                	x = tile_index%cls.chunk_size*cls.tile_size+chunk_id%self.map_of_chunks_size*cls.chunk_size*cls.tile_size
+	                	y = tile_index//cls.chunk_size*cls.tile_size+chunk_id//self.map_of_chunks_size*cls.chunk_size*cls.tile_size
+	                	rect = pygame.Rect(x, y, width, height)
+	                	type_ = tiles_info[str(tile_id)]
+	                	
+	                	chunk.rects_position.append([x,y])
+	                	chunk.rects.append(rect)
+	                	
+	                	arguments = copy.copy(register_objects_info[type_])
+	                	arguments.pop("Type")
+	                	arguments.update({"Name":self.tilemap_name+str(chunk_id)+str(tile_index)})
+	                	arguments.update({"Position":[x, y]})
+	                	game_object = copy.copy(cls.game_object_types[type_])
+	                	for argument_name in arguments:
+	                     	      		if hasattr(game_object, argument_name.lower()):
+	                     	      			setattr(game_object, argument_name.lower(), arguments[argument_name])
+	                	game_object.camera = self.camera
+	                	game_object.scene = self.scene
+	                	game_object.setup()
+	                	if isinstance(game_object, Wall):
+	                	    chunk.walls.add(game_object)
+	                	else:
+	                	    chunk.game_objects.append(game_object)
+                else:
+                	if tile_id in objects_tiles_ids:
+                		width = cls.tile_size
+                		height = cls.tile_size
+                		x = tile_index%cls.chunk_size*cls.tile_size+chunk_id%self.map_of_chunks_size*cls.chunk_size*cls.tile_size
+                		y = tile_index//cls.chunk_size*cls.tile_size+chunk_id//self.map_of_chunks_size*cls.chunk_size*cls.tile_size
+                		rect = pygame.Rect(x, y, width, height)
+                		type_ = tiles_info[str(tile_id)]
+                		chunk.rects_position.append([x,y])
+                		chunk.rects.append(rect)
+                		arguments = copy.copy(register_objects_info[type_])
+                		arguments.pop("Type")
+                		arguments.update({"Name":self.tilemap_name+str(chunk_id)+str(tile_index)})
+                		arguments.update({"Position":[x, y]})
+                		game_object = copy.copy(cls.game_object_types[type_])
+                		for argument_name in arguments:
+                		    	      if hasattr(game_object, argument_name.lower()):
+                		    	      	setattr(game_object, argument_name.lower(), arguments[argument_name])
+                		game_object.camera = self.camera
+                		game_object.scene = self.scene
+                		game_object.setup()
+                		if isinstance(game_object, Wall):
+                			chunk.walls.add(game_object)
+                		else:
+                			chunk.game_objects.append(game_object)
 
     def tick(self, *args):
         super().tick(*args)
@@ -1394,6 +1458,34 @@ class Item(GameObject):
 	def __init__(self):
 		super().__init__()
 		self.item_type = None
+		
+class Bullet(GameObject):
+	def __init__(self):
+		super().__init__()
+		self.animation_name = "Bullet"
+		
+class Bariga(GameObject):
+	def __init__(self):
+		super().__init__()
+		self.animation_name = "Bariga"
+		self.required_item_type = None
+		self.required_quantity = None
+		self.given_item_type = None
+		self.font = None
+		self.rendered_text2 = None
+		self.last_required_quantity = None
+	def setup(self, *args):
+		super().setup(*args)
+		self.font = pygame.font.SysFont("Ariel", 40)
+		self.rendered_text2 = self.font.render("0", "black", True)
+	def tick(self, *args):
+		super().tick(*args)
+		if self.last_required_quantity != self.required_quantity:
+			self.rendered_text2 = self.font.render(str(self.required_quantity), "black", True)
+		self.last_required_quantity = self.required_quantity
+		self.scene.game.screen.blit(self.scene.player_inventory.hand_item_images[str(self.required_item_type)], [self.rect.x+15, self.rect.y+70])
+		self.scene.game.screen.blit(self.rendered_text2, [self.rect.x+50, self.rect.y+70])
+		self.scene.game.screen.blit(self.scene.player_inventory.hand_item_images[str(self.given_item_type)], [self.rect.x+150, self.rect.y+70])
 
 class Inventory(GameObject):
 		def __init__(self, *args):
@@ -1448,10 +1540,9 @@ class Inventory(GameObject):
 						self.player.hand_item_type = self.player.inventory_data[self.choosed_box_index]
 						self.player.events.append(["Game object state changed", [7, self.player.id, self.player.velocity, self.player.position, self.player.type_id, self.player.nickname, self.player.inventory_data, self.player.hand_item_type, self.player.hp]])
 					
-			if mouse_is_pressed and self.pick_up_box_rect.collidepoint(mouse_position):
+			if mouse_is_pressed and self.pick_up_box_rect.collidepoint(mouse_position) and not self.player.hp <= 0:
 					min_distance = 100
 					min_distance_item = None
-					print(self.scene.items)
 					for item in self.scene.items:
 						distance = math.sqrt((item.position[0]-self.player.position[0])**2+(item.position[1]-self.player.position[1])**2)
 						if min_distance > distance:
@@ -1461,7 +1552,7 @@ class Inventory(GameObject):
 						player_inventory_data = copy.copy(self.player.inventory_data)
 						player_inventory_data[self.choosed_box_index] = min_distance_item.item_type
 						self.player.events.append(["Game object state changed", [6, self.player.id, self.player.velocity, self.player.position, self.player.type_id, self.player.nickname, player_inventory_data, self.player.hand_item_type]])
-			if mouse_is_pressed and self.throw_away_box_rect.collidepoint(mouse_position):
+			if mouse_is_pressed and self.throw_away_box_rect.collidepoint(mouse_position) and not self.player.hp <= 0:
 					player_inventory_data = copy.copy(self.player.inventory_data)
 					player_inventory_data[self.choosed_box_index] = 0
 					self.player.events.append(["Game object state changed", [6, self.player.id, self.player.velocity, self.player.position, self.player.type_id, self.player.nickname, player_inventory_data, self.player.hand_item_type]])
