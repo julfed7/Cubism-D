@@ -39,8 +39,6 @@ async def main():
 	
 	CONFIG_SETUP_FILE_NAME = "setup.json"
 	
-	
-	
 	config = utils.read_file(utils.path(PATH_TO_FOLDER_WHERE_SETTINGS+"/"+CONFIG_APP_FILE_NAME, ENVIRONMENT_OS))
 	
 	TITLE = config["App"]["Title"]

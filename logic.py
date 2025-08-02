@@ -107,8 +107,12 @@ class Game:
         if self.ticks % 60 == 0 and current_scene.my_player_id is None and current_scene.is_online_mode is True:
         	self.current_event.append(["Get player ID", []])
         
-        if current_scene.my_player_id is not None:
+        if current_scene.is_online_mode is True and current_scene.my_player_id is not None:
         	self.current_event.append(["Get game objects", []])
+        	
+        if current_scene.is_online_mode is True and current_scene.tilemap is not None and self.ticks % 60 == 0:
+        	if current_scene.tilemap.first_load is False:
+        		self.current_event.append(["Get tilemap", []])
         
         if self.current_event != []:
               try:
@@ -120,7 +124,13 @@ class Game:
               except BrokenPipeError:
               	pass
         try:
-          	data = self.itinerarium.recv(65536)
+          	if current_scene.tilemap is not None:
+          		if current_scene.tilemap.first_load is False:
+          			data = self.itinerarium.recv(65536)
+          		else:
+          			data = self.itinerarium.recv(4000)
+          	else:
+          		data = self.itinerarium.recv(4000)
           	packet = data.decode()
           	start_slace = packet.find("{")
           	end_slace = packet.find("}{")
@@ -278,11 +288,13 @@ class Game:
           								game_object.animation_name = "Camera"
           							game_object.item_type = data[1][str(game_object_id)][3]
           						elif type_ == "Tilemap":
-          							TileMap.config_tilemaps["TileMaps"].update({f"Z_{game_object_id}":data[1][str(game_object_id)][3]})
+          							tilemap_info = []
+          							TileMap.config_tilemaps["TileMaps"].update({f"Z_{game_object_id}":tilemap_info})
           							
           							game_object = TileMap()
           							game_object.animation_name = "Camera"
           							game_object.tilemap_name = f"Z_{game_object_id}"
+          							current_scene.tilemap = game_object
           						elif type_ == "Bullet":
           							game_object = Bullet()
           						elif type_ == "Bariga":
@@ -310,8 +322,9 @@ class Game:
           							current_scene.game_objects["Z"+str(game_object_id)].hp = data[1][str(game_object_id)][6]
           						elif type_ == "Tilemap":
           							TileMap.config_tilemaps["TileMaps"][current_scene.game_objects["Z"+str(game_object_id)].tilemap_name] = data[1][str(game_object_id)][3]
-          							for edited_chunk in data[1][str(game_object_id)][4]:
-          								current_scene.game_objects["Z"+str(game_object_id)].edit_chunk(edited_chunk[0], edited_chunk[1])
+          							if current_scene.game_objects["Z"+str(game_object_id)].first_load is True:
+          								for edited_chunk in data[1][str(game_object_id)][3]:
+          									current_scene.game_objects["Z"+str(game_object_id)].edit_chunk(edited_chunk[0], edited_chunk[1])
           						elif type_ == "Bariga":
           							current_scene.game_objects["Z"+str(game_object_id)].required_item_type = data[1][str(game_object_id)][3]
           							current_scene.game_objects["Z"+str(game_object_id)].required_quantity = data[1][str(game_object_id)][4]
@@ -321,6 +334,11 @@ class Game:
           						"""
           			elif event_name == "Leave room now":
           				self.exit_from_room()
+          			elif event_name == "Your tilemap":
+          				if current_scene.tilemap is not None:
+          					TileMap.config_tilemaps["TileMaps"][current_scene.tilemap.tilemap_name] = event_data[0]
+          					current_scene.tilemap.first_load = True
+          					current_scene.tilemap.setup()
         except BlockingIOError and OSError:
           			pass
           			
@@ -349,6 +367,8 @@ class Game:
         self.current_scene = index
         current_scene = self.get_scene()
         current_scene.ticks = 0
+        for game_object in list(current_scene.game_objects.values()):
+        	game_object.ticks = 0
         #self.screen.fill((255,255,255))
     
     def join_room(self, room_name, nickname):
@@ -704,7 +724,7 @@ class Entity(GameObject):
     	self.velocity[1] = direction[1]
 
     	rects = []
-    	if self.scene.tilemap is not None:
+    	if self.scene.tilemap is not None and self.scene.tilemap.first_load is True:
     		chunk = utils.get_here_chunk(self.scene.tilemap.player_chunk_x, self.scene.tilemap.player_chunk_y, self.scene.tilemap.chunks, self.scene.tilemap.map_of_chunks_size)
     		for i, rect in enumerate(chunk.rects):
     			rect.x = chunk.rects_position[i][0] - self.camera.position[0]
@@ -719,7 +739,7 @@ class Entity(GameObject):
     		collided_rect = rects[collided_rect_index]
     	except IndexError:
     		pass
-    	print(rects)
+
     	if collided_rect_index != -1:
     			self.position[0] -= self.speed * self.velocity[0] * self.delta_time
     			self.rect.x = self.position[0] - self.camera.position[0]
@@ -841,6 +861,7 @@ class TileMap(GameObject):
         self.player_chunk_x = 0
         self.player_chunk_y = 0
         self.rects_optimization = False
+        self.first_load = False
         super().__init__(*args)
         
     def edit_chunk(self, chunk_id, tiles_ids):
@@ -852,10 +873,14 @@ class TileMap(GameObject):
                 chunk.image.blit(cls.tiles_images[tile_id], [x, y])
 
     def setup(self):
-
         super().setup()
     	
         cls = type(self)
+        
+        if not self.scene.is_online_mode:
+        	self.first_load = True
+        
+        self.chunks = []
 
         tilemap_info = cls.config_tilemaps["TileMaps"][self.tilemap_name]
 
@@ -1004,6 +1029,7 @@ class TileMap(GameObject):
                 			chunk.walls.add(game_object)
                 		else:
                 			chunk.game_objects.append(game_object)
+
 
     def tick(self, *args):
         super().tick(*args)
