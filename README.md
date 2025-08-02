@@ -6,5 +6,6 @@ Source code video game created with pygame
 link to play:
 https://julfed.itch.io/cubism-d
 
-Current task:
+Last task:
 Make online tilemap bigger✅
+Current Task:
