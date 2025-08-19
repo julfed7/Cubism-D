@@ -3,7 +3,6 @@ import time
 import pygame
 import logic
 import copy
-import asyncio
 import sys
 
 # /// script
@@ -14,7 +13,7 @@ import sys
 
 
 
-async def main():	
+def main():	
 	device_type = "smartphone"
 
 	if device_type == "smartphone":
@@ -291,8 +290,9 @@ async def main():
 		
 		clock.tick(FPS)
 		
-		await asyncio.sleep(0)
+		#await asyncio.sleep(0)
 	#tick(is_running, screen, virtual_screen, game, screen_orientation, screen_size, ticks, WIDTH, HEIGHT, delta_time, last_time, clock, FPS)
 	pygame.quit()
 
-asyncio.run(main())
+#asyncio.run(main())
+main()
