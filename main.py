@@ -5,7 +5,6 @@ import logic
 import copy
 import asyncio
 import sys
-import websockets
 
 # /// script
 # dependencies = [
@@ -87,7 +86,7 @@ async def main():
 	
 	pygame.init()
 	
-	screen = pygame.display.set_mode((0,0), pygame.FULLSCREEN|pygame.DOUBLEBUF|pygame.HWSURFACE)
+	screen = pygame.display.set_mode((0,0), pygame.FULLSCREEN|pygame.DOUBLEBUF)
 	
 	virtual_screen = pygame.Surface((WIDTH, HEIGHT))
 	

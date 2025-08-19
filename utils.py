@@ -15,7 +15,7 @@ def path(this_path, environment_os="Android"):
   if environment_os == "Windows":
     return resource_path(this_path)
   else:
-    return this_path
+    return os.path.abspath(this_path)
 
 def read_file_json(path):
   with open(path) as file:

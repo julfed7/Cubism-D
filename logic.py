@@ -11,7 +11,7 @@ import websockets
 from websockets.sync.client import connect
 
 class Game:
-    __slots__ = ["__scenes", "current_scene", "screen", "changed_virtual_screen_position", "virtual_screen_size", "screen_size", "ENVIRONMENT_OS", "TILE_SIZE", "IP", "is_online_mode", "current_event", "ticks", "itinerarium", "game_object_types", "my_id", "network_checking_time", "lagging_ticks", "last_packet_time", "chunk_distance_fov", "clock", "game_objects_render_distance", "draw_rects", "SELF_PLAYER_TYPE_ID", "OTHER_PLAYER_TYPE_ID", "MAP_MAX_SIZE", "ONLINE_GAME_OBJECTS_RENDER_DISTANCE", "start_server"]
+    __slots__ = ["__scenes", "current_scene", "screen", "changed_virtual_screen_position", "virtual_screen_size", "screen_size", "ENVIRONMENT_OS", "TILE_SIZE", "IP", "is_online_mode", "current_event", "ticks", "itinerarium", "game_object_types", "my_id", "network_checking_time", "lagging_ticks", "last_packet_time", "chunk_distance_fov", "clock", "game_objects_render_distance", "draw_rects", "SELF_PLAYER_TYPE_ID", "OTHER_PLAYER_TYPE_ID", "MAP_MAX_SIZE", "ONLINE_GAME_OBJECTS_RENDER_DISTANCE", "start_server", "recv_data_size"]
     def __init__(self):
         self.__scenes = {}
         
@@ -66,6 +66,8 @@ class Game:
         self.draw_rects = []
         
         self.start_server = None
+        
+        self.recv_data_size = 20000
         
     def setup(self, screen, virtual_screen_size, ENVIRONMENT_OS, TILE_SIZE, IP, CHUNK_DISTANCE_FOV, clock, GAME_OBJECTS_RENDER_DISTANCE):
         self.screen = screen
@@ -128,9 +130,9 @@ class Game:
           		if current_scene.tilemap.first_load is False:
           			data = self.itinerarium.recv(65536)
           		else:
-          			data = self.itinerarium.recv(4000)
+          			data = self.itinerarium.recv(self.recv_data_size)
           	else:
-          		data = self.itinerarium.recv(4000)
+          		data = self.itinerarium.recv(self.recv_data_size)
           	packet = data.decode()
           	start_slace = packet.find("{")
           	end_slace = packet.find("}{")
@@ -1546,8 +1548,9 @@ class Inventory(GameObject):
 			self.inventory_box_rect = pygame.Rect(self.position[0], self.position[1], (self.box_count+1)*self.box_size+self.box_count*self.box_offset, self.box_size)
 			for item_image_id in self.item_image_ids:
 				path = "sprites"
-				item_image = pygame.image.load(path+"/"+self.item_image_ids[item_image_id])
-				hand_item_image = pygame.transform.scale(item_image, (25,25))
+				image = pygame.image.load(utils.path(path+"/"+self.item_image_ids[item_image_id]))
+				item_image = pygame.transform.scale(image, (50,50))
+				hand_item_image = image
 				self.item_images.update({item_image_id:item_image})
 				self.hand_item_images.update({item_image_id:hand_item_image})
 		def tick(self, *args):
