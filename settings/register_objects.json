@@ -41,10 +41,10 @@
       "Color": "black",
       "item_image_ids": {
         "0": "camera_default1.png",
-        "1": "pickaxe.png",
-        "2": "sword.png",
-        "3": "gun.png",
-        "4": "coin.png"
+        "1": "pickaxe_default1.png",
+        "2": "sword_default1.png",
+        "3": "gun_default1.png",
+        "4": "coin_default1.png"
       }
     },
     "CommonHp": {
