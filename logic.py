@@ -92,8 +92,8 @@ class Game:
      
         if self.itinerarium is None:
           	try:
-          			#self.itinerarium = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-          			#self.itinerarium.setblocking(False)
+          			self.itinerarium = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+          			self.itinerarium.setblocking(False)
           			self.current_event.append(["New client", [True]])
           	except ConnectionRefusedError:
           				pass
