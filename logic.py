@@ -89,8 +89,8 @@ class Game:
      
         if self.itinerarium is None:
           	try:
-          			self.itinerarium = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-          			self.itinerarium.setblocking(False)
+          			#self.itinerarium = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+          			#self.itinerarium.setblocking(False)
           			self.current_event.append(["New client", [True]])
           	except ConnectionRefusedError:
           				pass
@@ -113,7 +113,7 @@ class Game:
         	if current_scene.tilemap.first_load is False:
         		self.current_event.append(["Get tilemap", []])
         
-        if self.current_event != []:
+        if self.current_event != [] and self.itinerarium is not None:
               try:
               	request = {"event_bus": self.current_event, "ticks": self.ticks}
               	packet = json.dumps(request)
@@ -123,13 +123,16 @@ class Game:
               except BrokenPipeError:
               	pass
         try:
-          	if current_scene.tilemap is not None:
-          		if current_scene.tilemap.first_load is False:
-          			data = self.itinerarium.recv(65536)
-          		else:
-          			data = self.itinerarium.recv(self.recv_data_size)
+          	if self.itinerarium is not None:
+	          	if current_scene.tilemap is not None:
+	          		if current_scene.tilemap.first_load is False:
+	          			data = self.itinerarium.recv(65536)
+	          		else:
+	          			data = self.itinerarium.recv(self.recv_data_size)
+	          	else:
+	          		data = self.itinerarium.recv(self.recv_data_size)
           	else:
-          		data = self.itinerarium.recv(self.recv_data_size)
+	          	data = b""
           	packet = data.decode()
           	start_slace = packet.find("{")
           	end_slace = packet.find("}{")
