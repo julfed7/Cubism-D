@@ -6,9 +6,10 @@ import time
 import socket
 import json
 import utils
+from android.permissions import request_permissions, Permission
 
 class Game:
-    __slots__ = ["__scenes", "current_scene", "screen", "changed_virtual_screen_position", "virtual_screen_size", "screen_size", "ENVIRONMENT_OS", "TILE_SIZE", "IP", "is_online_mode", "current_event", "ticks", "itinerarium", "game_object_types", "my_id", "network_checking_time", "lagging_ticks", "last_packet_time", "chunk_distance_fov", "clock", "game_objects_render_distance", "draw_rects", "SELF_PLAYER_TYPE_ID", "OTHER_PLAYER_TYPE_ID", "MAP_MAX_SIZE", "ONLINE_GAME_OBJECTS_RENDER_DISTANCE", "start_server", "recv_data_size"]
+    __slots__ = ["__scenes", "current_scene", "screen", "changed_virtual_screen_position", "virtual_screen_size", "screen_size", "ENVIRONMENT_OS", "TILE_SIZE", "IP", "is_online_mode", "current_event", "ticks", "itinerarium", "game_object_types", "my_id", "network_checking_time", "lagging_ticks", "last_packet_time", "chunk_distance_fov", "clock", "game_objects_render_distance", "draw_rects", "SELF_PLAYER_TYPE_ID", "OTHER_PLAYER_TYPE_ID", "MAP_MAX_SIZE", "ONLINE_GAME_OBJECTS_RENDER_DISTANCE", "start_server", "recv_data_size", "compile_mode"]
     def __init__(self):
         self.__scenes = {}
         
@@ -66,6 +67,8 @@ class Game:
         
         self.recv_data_size = 20000
         
+        self.compile_mode = "Apk"
+        
     def setup(self, screen, virtual_screen_size, ENVIRONMENT_OS, TILE_SIZE, IP, CHUNK_DISTANCE_FOV, clock, GAME_OBJECTS_RENDER_DISTANCE):
         self.screen = screen
         self.virtual_screen_size = virtual_screen_size
@@ -99,6 +102,9 @@ class Game:
           	#self.change_current_scene(0)
           	self.current_event.append(["New client", [True]])
           	self.last_packet_time = time.time()
+          	
+        if self.ticks == 0 and self.compile_mode == "Apk":
+          	request_permissions([Permission.INTERNET])
           				
         if self.ticks % 120 == 0:
           	self.current_event.append(["Client alive", [True]])
