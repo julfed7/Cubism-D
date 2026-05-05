@@ -1,0 +1,127 @@
+{
+  "Register_objects": {
+    "PeaShooter": {
+      "Type": "Entity",
+      "Animation_name": "PeaShooter",
+      "Speed": 200,
+      "Type_id": 1
+    },
+    "Cube": {
+      "Type": "Entity",
+      "Animation_name": "Player",
+      "Speed": 200
+    },
+    "Grass": {
+      "Type": "Wall",
+      "Animation_name": "Grass",
+      "Not_animated": true
+    },
+    "Player": {
+      "Type": "Entity",
+      "Animation_name": "Player",
+      "Speed": 200
+    },
+    "MenuScreen": {
+      "Type": "Wall",
+      "Animation_name": "Menu_screen"
+    },
+    "CommonScene": {
+      "Type": "Scene",
+      "Not_animated": true
+    },
+    "CommonCamera": {
+      "Type": "Camera",
+      "Animation_name": "Camera",
+      "Not_animated": true
+    },
+    "CommonTilemap": {
+      "Type": "TileMap",
+      "Animation_name": "Camera",
+      "Not_animated": true
+    },
+    "CommonInput": {
+      "Type": "Input",
+      "Animation_name": "Camera",
+      "Not_animated": true
+    },
+    "CommonJoyStick": {
+      "Type": "Input",
+      "Animation_name": "Camera",
+      "Not_animated": true
+    },
+    "CommonKeyBoard": {
+      "Type": "Input",
+      "Animation_name": "Camera",
+      "Not_animated": true
+    },
+    "CommonFpsCounter": {
+      "Type": "Text",
+      "Animation_name": "Camera",
+      "Not_animated": true,
+      "Mode": "FpsCounter",
+      "Size": 15
+    },
+    "CommonOnlineModeViewer": {
+      "Type": "Text",
+      "Animation_name": "Camera",
+      "Not_animated": true,
+      "Mode": "OnlineModeViewer",
+      "Size": 15
+    },
+    "CommonButton": {
+      "Type": "Button",
+      "Animation_name": "Camera",
+      "Not_animated": true,
+      "Width": 350,
+      "Height": 100,
+      "Color": "white",
+      "Border_color": "black",
+      "Border_radius": 10,
+      "Func_name": "change_current_scene"
+    },
+    "SquareButton": {
+      "Type": "Button",
+      "Animation_name": "Camera",
+      "Not_animated": true,
+      "Width": 150,
+      "Height": 150,
+      "Color": "white",
+      "Border_color": "black",
+      "Border_radius": 10,
+      "Func_name": "change_current_scene"
+    },
+    "CommonText": {
+      "Type": "Text",
+      "Animation_name": "Camera",
+      "Not_animated": true
+    },
+    "SmallText": {
+      "Type": "Text",
+      "Animation_name": "Camera",
+      "Not_animated": true,
+      "Size": 15
+    },
+    "BlackIntro": {
+      "Type": "Intro",
+      "Animation_name": "Camera",
+      "Not_animated": true,
+      "Color": "black"
+    },
+    "CommonCoin": {
+      "Type": "Entity",
+      "Animation_name": "Coin",
+      "Not_animated": true,
+      "Mode": "Coin",
+      "Teleport_zone": [0, 1250, 0, 1250],
+      "Animation_is_alpha": true
+    },
+    "CommonRoomLabel": {
+      "Type": "RoomLabel",
+      "Animation_name": "Camera",
+      "Not_animated": true,
+      "Animation_is_alpha": true,
+      "Width": 300,
+      "Height": 250
+    }
+  }
+}
