@@ -4,7 +4,15 @@ import json
 import pygame
 import math
 import asyncio
+import requests
 from functools import wraps
+
+
+def send_alert(msg):
+    try:
+        requests.post("https://ntfy.sh/cubism", data=msg.encode("utf-8"), timeout=5)
+    except Exception as e:
+    	pass
 
 def resource_path(relative):
   if hasattr(sys, "_MEIPASS"):
@@ -98,3 +106,19 @@ def get_joystick_direction(position, mouse_position):
 	vector_y = math.sin(angle)
 	lenght = math.sqrt((position[0]-mouse_position[0])**2+(position[1]-mouse_position[1])**2)
 	return angle, vector_x, vector_y, lenght
+
+class EmptyObject:
+	pass
+	
+value = EmptyObject()
+
+class Tee(object):
+    def __init__(self, *files):
+        self.files = files
+    def write(self, obj):
+        for f in self.files:
+            f.write(obj)
+            f.flush() # Сразу выводим текст на экран
+    def flush(self):
+        for f in self.files:
+            f.flush()
