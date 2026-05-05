@@ -12,8 +12,8 @@ import utils
 
 # ============================== КОНФИГУРАЦИЯ ==============================
 class Config:
-    DEVICE_TYPE = "smartphone"          # "smartphone" или "computer"
-    COMPILE_MODE = "Apk"                # "Apk" или "Exe"
+    DEVICE_TYPE = "computer"          # "smartphone" или "computer"
+    COMPILE_MODE = "Exe"                # "Apk" или "Exe"
 
     PATH_SETTINGS = "settings"
     PATH_IMAGES = "sprites"
