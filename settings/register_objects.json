@@ -25,6 +25,50 @@
       "Animation_name": "Grass",
       "Not_animated": true
     },
+    "Acacia_Log_Top": {
+      "Type": "Block",
+      "Animation_name": "Acacia_log_top"
+    },
+    "Stone_Bricks": {
+      "Type": "Wall",
+      "Animation_name": "Stone_bricks",
+      "Not_animated": true
+    },
+    "Purple_Wool": {
+      "Type": "Wall",
+      "Animation_name": "Purple_wool",
+      "Not_animated": true
+    },
+    "Verstak": {
+      "Type": "Wall",
+      "Animation_name": "Verstak_animation",
+      "Not_animated": true
+    },
+    "Derevo_Tile": {
+      "Type": "Wall",
+      "Animation_name": "Derevo_tile",
+      "Not_animated": true
+    },
+    "Pechka": {
+      "Type": "Wall",
+      "Animation_name": "Pechka_animation",
+      "Not_animated": true
+    },
+    "Tumba": {
+      "Type": "Wall",
+      "Animation_name": "Tumba_animation",
+      "Not_animated": true
+    },
+    "Bone_Block_Top": {
+      "Type": "Wall",
+      "Animation_name": "Bone_block_top",
+      "Not_animated": true
+    },
+    "Door": {
+      "Type": "Block",
+      "Animation_name": "Door_animation",
+      "Not_animated": false
+    },
     "Player": {
       "Type": "Entity",
       "Animation_name": "Player",
@@ -159,6 +203,7 @@
       "Width": 800,
       "Height": 70,
       "Color": "grey",
+      "Text_color": "black",
       "Border_color": "black",
       "Border_radius": 5,
       "Size": 19,

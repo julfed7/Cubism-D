@@ -103,7 +103,7 @@
       "Arguments": {
         "Position": [550, 0],
         "Text": "Levels",
-        "Color": "white",
+        "Color": "black",
         "Size": 25
       }
     },
@@ -166,7 +166,7 @@
       "Arguments": {
         "Position": [450, 0],
         "Text": "Create Room",
-        "Color": "white",
+        "Color": "black",
         "Size": 35
       }
     },
@@ -214,7 +214,7 @@
       "Arguments": {
         "Position": [230, 200],
         "Text": "Nickname:",
-        "Color": "white",
+        "Color": "black",
         "Size": 40
       }
     },
@@ -253,7 +253,7 @@
       "Arguments": {
         "Position": [570, 0],
         "Text": "Rooms",
-        "Color": "white",
+        "Color": "black",
         "Size": 20
       }
     },
@@ -283,7 +283,7 @@
    "Level1": {
       "Type": "CommonScene",
       "Arguments": {
-        "Game_objects": ["Level1Player", "Level1Player_fov", "Level1Input", "Level1FpsCounter", "A_Level1MapWorld", "Level1Button", "Level1Coin"],
+        "Game_objects": ["Level1Player", "Level1Player_fov", "Level1Input", "Level1FpsCounter", "Level1Button", "Level1Coin", "A_Level1MapWorld"],
         "Player_game_object_name": "Level1Player",
         "Player_controller_game_object_name": "Level1Input",
         "Current_camera_name": "Level1Player_fov",
@@ -308,14 +308,14 @@
     "Level1Player": {
       "Type": "Player",
       "Arguments": {
-        "Position": [-50, -50]
+        "Position": [1000, 4000]
       }
     },
     "Level1Player_fov": {
       "Type": "CommonCamera",
       "Arguments": {
-        "Position": [0, 0],
-        "Mode": "Focus_at_game_object",
+        "Position": [317, 3616],
+        "Mode": "Slow_focus_at_game_object",
         "Target_game_object_name": "Level1Player",
         "Focus_zone": [658, 359, 50, 50]
       }
@@ -324,7 +324,7 @@
       "Type": "CommonTilemap",
       "Arguments": {
         "Position": [0, 0],
-        "TileMap_name": "Sandbox"
+        "TileMap_name": "Alternative Frontis Podval"
       }
     },
     "Level1Input": {
@@ -344,6 +344,75 @@
       }
     },
     "Level1FpsCounter": {
+      "Type": "CommonFpsCounter",
+      "Arguments": {
+        "Position": [0, 0]
+      }
+    },
+    "Level2": {
+      "Type": "CommonScene",
+      "Arguments": {
+        "Game_objects": ["Level2Player", "Level2Player_fov", "Level2Input", "Level2FpsCounter", "A_Level2MapWorld", "Level2Button", "Level2Coin"],
+        "Player_game_object_name": "Level2Player",
+        "Player_controller_game_object_name": "Level2Input",
+        "Current_camera_name": "Level2Player_fov",
+        "Is_online_mode": false,
+        "Tilemap_name": "A_Level2MapWorld"
+      }
+    },
+    "Level2Coin": {
+      "Type": "CommonCoin",
+      "Arguments": {
+        "Position": [625, 625]
+      }
+    },
+    "Level2Button": {
+      "Type": "SquareButton",
+      "Arguments": {
+        "Position": [1216, 0],
+        "Text": "Exit",
+        "Func_args": [0]
+      }
+    },
+    "Level2Player": {
+      "Type": "Player",
+      "Arguments": {
+        "Position": [2150, 2150]
+      }
+    },
+    "Level2Player_fov": {
+      "Type": "CommonCamera",
+      "Arguments": {
+        "Position": [0, 0],
+        "Mode": "Focus_at_game_object",
+        "Target_game_object_name": "Level2Player",
+        "Focus_zone": [658, 359, 50, 50]
+      }
+    },
+    "A_Level2MapWorld": {
+      "Type": "CommonTilemap",
+      "Arguments": {
+        "Position": [0, 0],
+        "TileMap_name": "Alternative Frontis Island"
+      }
+    },
+    "Level2Input": {
+      "Type": "CommonInput",
+      "Arguments": {
+        "Position": [200, 600],
+        "Color": "black",
+        "Radius": 100,
+        "Border_radius": 10,
+        "Touching_zone_box": [0, 468, 300, 300],
+        "Hot_keys": {
+          "PLAYER_UP": "W",
+          "PLAYER_LEFT": "A",
+          "PLAYER_DOWN": "S",
+          "PLAYER_RIGHT": "D"
+        }
+      }
+    },
+    "Level2FpsCounter": {
       "Type": "CommonFpsCounter",
       "Arguments": {
         "Position": [0, 0]

@@ -1,16 +1,7 @@
 {
   "TileMaps": {
-    "Sandbox": [
-1,1,2,2,2,2,2,2,2,2,
-1,1,2,2,2,2,2,2,2,2,
-2,2,2,2,2,2,2,2,2,2,
-2,2,2,2,2,2,2,2,2,2,
-2,2,2,2,2,2,2,2,2,2,
-2,2,2,2,2,2,2,2,2,2,
-2,2,2,2,2,2,2,2,2,2,
-2,2,2,2,2,2,2,2,2,2,
-2,2,2,2,2,2,2,2,2,2,
-2,2,2,2,2,2,2,2,2,2
-]
+    "Sandbox": "developer_room.json",
+    "Alternative Frontis Island": "alternative_frontis_island.json",
+    "Alternative Frontis Podval": "alternative_frontis_podval.json"
   }
 }

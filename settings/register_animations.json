@@ -12,6 +12,60 @@
         "Ticks": [3600]
       }
     },
+    "Acacia_log_top": {
+      "Default": {
+        "Frames": 1,
+        "Ticks" : [3600]
+      }
+    },
+    "Stone_bricks": {
+      "Default": {
+        "Frames": 1,
+        "Ticks" : [3600]
+      }
+    },
+    "Purple_wool": {
+      "Default": {
+        "Frames": 1,
+        "Ticks" : [3600]
+      }
+    },
+    "Verstak_animation": {
+      "Default": {
+        "Frames": 1,
+        "Ticks" : [3600]
+      }
+    },
+    "Derevo_tile": {
+      "Default": {
+        "Frames": 1,
+        "Ticks" : [3600]
+      }
+    },
+    "Pechka_animation": {
+      "Default": {
+        "Frames": 1,
+        "Ticks" : [3600]
+      }
+    },
+    "Tumba_animation": {
+      "Default": {
+        "Frames": 1,
+        "Ticks" : [3600]
+      }
+    },
+    "Bone_block_top": {
+      "Default": {
+        "Frames": 1,
+        "Ticks" : [3600]
+      }
+    },
+    "Door_animation": {
+      "Default": {
+        "Frames": 1,
+        "Ticks" : [3600]
+      }
+    },
     "Camera": {
       "Default": {
         "Frames": 1,
