@@ -13,7 +13,7 @@ import utils
 # ============================== КОНФИГУРАЦИЯ ==============================
 class Config:
     DEVICE_TYPE = "computer"          # "smartphone" или "computer"
-    COMPILE_MODE = "Exe"                # "Apk" или "Exe"
+    COMPILE_MODE = "Debug"                # "Apk" или "Exe"
 
     PATH_SETTINGS = "settings"
     PATH_IMAGES = "sprites"
@@ -280,7 +280,7 @@ class GameApplication:
                     self.text_box.text = self.text_box.text[:-1]
                 elif (
                     self.text_box
-                    and (Config.COMPILE_MODE in ("Exe", "Apk"))
+                    and (Config.COMPILE_MODE in ("Exe", "Apk", "Debug"))
                     and len(self.text_box.text) + 1 <= self.text_box.max_count_symbols
                 ):
                     self.text_box.text += event.unicode
