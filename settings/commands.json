@@ -1,0 +1,8 @@
+{
+  "Commands": {
+    "Teleport": [
+      "def teleport(position):",
+      " print(position)"
+    ]
+  }
+}

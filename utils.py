@@ -1,9 +1,7 @@
 import sys
 import os
 import json
-import pygame
 import math
-import asyncio
 import requests
 from functools import wraps
 
@@ -32,6 +30,18 @@ def read_file_json(path):
   
   return dictionary
 
+
+def read_file_jsonc(config_file_path: str):
+    import json, re
+
+    try:
+        with open(config_file_path, 'r') as json_file:
+            json_data = json_file.read()
+            return json.loads(
+                re.sub("[^:]//.*", "", json_data, flags=re.MULTILINE))  # Remove C-style comments before processing JSON
+    except FileNotFoundError:
+        raise
+
 def read_file(path):
   if "/" in path:
     file_name = path.split("/")[-1]
@@ -42,6 +52,8 @@ def read_file(path):
   
   if file_type == "json":
     return read_file_json(path)
+  elif file_type == "jsonc":
+    return read_file_jsonc(config_file_path=path)
 
 def memory(func):
 	cache = {}

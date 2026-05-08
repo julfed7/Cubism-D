@@ -6,11 +6,8 @@ import time
 import socket
 import json
 import utils
-import errno
-import select
 import threading
 import struct
-import os
 from typing import Any, Optional, List, Tuple
 
 def parse_stacked_json(data):
@@ -75,8 +72,163 @@ def recvall(self, length):
 
 socket.socket.recvall = recvall
 
+
+class Logger:
+    def __init__(self, console):
+        self.console = console
+    def print(self, text, is_error=False):
+        print(text)
+        self.console.print(text, is_error)
+
+class Console:
+    def __init__(self, game, screen_width, FPS):
+        self.game = game
+        self.screen_width = screen_width
+        self.FPS = FPS
+        self.from_y = -400
+        self.to_y = 0
+        self.length = abs(self.from_y-self.to_y)
+        self.height = self.length
+        self.surface = pygame.Surface((self.screen_width, self.height))
+        self.surface.fill("black")
+        self.surface.set_alpha(128)
+        self.is_enabled = False
+        self.x = 0
+        self.y = self.from_y
+        self.time_to_open = 0.5
+        self.speed = self.length/self.time_to_open
+        self.is_stopped = True
+        self.offset_y = 0
+        self.text = ""
+        self.command_line = "> "
+        self.font = pygame.font.SysFont("Ariel", 30)
+        self.command_line_text = self.font.render(self.command_line, True, "white")
+        self.command_line_position_offset = [20, -10]
+        self.command_line_position = [0+self.command_line_position_offset[0], self.length-self.command_line_text.get_height()+self.command_line_position_offset[1]]
+        self.symbol_box_size = (10, self.command_line_text.get_height())
+        self.symbol_box_is_visible = True
+        self.symbol_box_hiding_time = 60
+        self.max_count_symbols = 80
+        self.column = self.text.count("\n")
+        self.max_console_column_size = (self.length-self.font.get_linesize())//self.font.get_linesize()
+        self.colors = {
+            "$r": "red",
+            "$o": "orange",
+            "$y": "yellow",
+            "$g": "green",
+            "$a": "aqua",
+            "$b": "blue",
+            "$p": "purple",
+            "$w": "white"
+        }
+        #self.commands = utils.read_file(utils.path("settings/commands.json"))
+
+    def print(self, text, is_error=False):
+        if is_error is True:
+            text = "$r" + str(text) + "$w" + "\n"
+        else:
+            text = "$g" + text + "$w" + "\n"
+
+        self.text += text
+
+    def toggle(self):
+        self.is_enabled = not self.is_enabled
+    def show(self, screen):
+        screen.blit(self.surface, [self.x, self.y])
+        lines = self.text.split("\n")
+        flipped_lines = lines[::-1]
+        for i, line in enumerate(flipped_lines[len(lines)-self.column:len(lines)-self.column+self.max_console_column_size]):
+            line_surface = self.font.render(line, True, "white")
+            line_surface = pygame.Surface(line_surface.get_size())
+            line_surface.convert_alpha()
+            line_surface.set_colorkey("black")
+            color = ""
+            color_string_is_started = False
+            current_line_width = 0
+            for char in line:
+                if char == "$":
+                    color_string_is_started = True
+                    color += char
+                elif color_string_is_started and char != "$":
+                    color += char
+                    color_string_is_started = False
+                else:
+                    color = color[len(color) - 2:]
+                    if color == "":
+                        color = "$w"
+                    char_surface = self.font.render(char, True, self.colors[color])
+                    char_surface.convert_alpha()
+                    char_surface.set_colorkey("black")
+                    line_surface.blit(char_surface, [current_line_width, 0])
+                    current_line_width += char_surface.get_width()
+
+            screen.blit(line_surface, (self.x+self.command_line_position[0], self.y+self.command_line_position[1]-(i+1)*self.font.get_linesize()-self.offset_y))
+        screen.blit(self.command_line_text, [self.x+self.command_line_position[0], self.y+self.command_line_position[1]])
+        if self.game.ticks % self.symbol_box_hiding_time == 0:
+            self.symbol_box_is_visible = not self.symbol_box_is_visible
+        if self.symbol_box_is_visible:
+            pygame.draw.rect(screen, "white", [self.x+self.command_line_position[0]+self.command_line_text.get_width()+self.symbol_box_size[0], self.y+self.command_line_position[1], self.symbol_box_size[0], self.symbol_box_size[1]])
+    def update(self, events):
+        if self.is_enabled == True:
+            self.is_stopped = False
+
+            self.column = self.text.count("\n")
+
+            for event in events:
+                if event.type == pygame.KEYUP:
+                    if event.key == pygame.K_RETURN:
+                        """
+                        parameters = self.command_line[2:].split(" ")
+                        command = parameters[0]
+                        args = parameters[1:]
+
+                        if command in self.commands["Commands"]:
+                            command_function = self.commands["Commands"][command]
+                            skobka_index1 = command_function.find("(")
+                            skobka_index2 = command_function.find(")")
+                            command_function = command_function[:skobka_index1] + str(*args) + command_function[skobka_index2:]
+                            self.game.logger.print(command_function)
+                        """
+                        self.text += self.command_line[2:] + "\n"
+                        self.command_line = "> "
+                        self.command_line_text = self.font.render(self.command_line, True, "white")
+                    elif event.key == pygame.K_UP:
+                        self.column -= 1
+                    elif event.key == pygame.K_DOWN:
+                        self.column += 1
+                    elif event.key != pygame.K_BACKSPACE and event.key != pygame.K_RETURN and len(self.command_line[2:]) < self.max_count_symbols:
+                        self.command_line += event.unicode
+                        self.command_line_text = self.font.render(self.command_line, True, "white")
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_BACKSPACE:
+                        self.command_line = self.command_line[0:max(2, len(self.command_line)-1)]
+                        self.command_line_text = self.font.render(self.command_line, True, "white")
+                elif event.type == pygame.MOUSEWHEEL:
+                    self.column -= event.y
+        if self.from_y < self.to_y:
+            if self.is_enabled:
+                self.y += self.speed * (1 / self.game.FPS)
+            else:
+                self.y -= self.speed * (1 / self.game.FPS)
+        elif self.from_y > self.to_y:
+            if self.is_enabled:
+                self.y -= self.speed * (1 / self.game.FPS)
+            else:
+                self.y += self.speed * (1 / self.game.FPS)
+
+        if abs(self.to_y-self.y) <= self.speed * (1 / self.game.FPS) and self.is_stopped is False:
+            self.y = self.to_y
+            self.is_stopped = True
+
+        if self.column < 0:
+            self.column = 0
+        elif self.column > self.text.count("\n"):
+            self.column = self.text.count("\n")
+
+
+
 class Game:
-    __slots__ = ["__scenes", "current_scene", "screen", "changed_virtual_screen_position", "virtual_screen_size", "screen_size", "ENVIRONMENT_OS", "TILE_SIZE", "IP", "is_online_mode", "current_event", "ticks", "itinerarium", "game_object_types", "my_id", "network_checking_time", "lagging_ticks", "last_packet_time", "chunk_distance_fov", "clock", "game_objects_render_distance", "draw_rects", "SELF_PLAYER_TYPE_ID", "OTHER_PLAYER_TYPE_ID", "MAP_MAX_SIZE", "ONLINE_GAME_OBJECTS_RENDER_DISTANCE", "start_server", "recv_data_size", "compile_mode", "itinerarium2", "session_id", "max_failed_connect_ticks", "is_access_to_multiplayer", "tcp_socket_event_bus", "tcp_socket_thread", "current_event2", "tcp_and_udp_is_company", "is_developer_mode", "mouse_pos", "mouse_staying_ticks", "last_mouse_pos", "user_become_afk_ticks", "user_is_afk", "last_world_loading_ticks", "world_loading_timer", "predict_time", "delta_time"]
+    __slots__ = ["__scenes", "current_scene", "screen", "changed_virtual_screen_position", "virtual_screen_size", "screen_size", "ENVIRONMENT_OS", "TILE_SIZE", "IP", "is_online_mode", "current_event", "ticks", "itinerarium", "game_object_types", "my_id", "network_checking_time", "lagging_ticks", "last_packet_time", "chunk_distance_fov", "clock", "game_objects_render_distance", "draw_rects", "SELF_PLAYER_TYPE_ID", "OTHER_PLAYER_TYPE_ID", "MAP_MAX_SIZE", "ONLINE_GAME_OBJECTS_RENDER_DISTANCE", "start_server", "recv_data_size", "compile_mode", "itinerarium2", "session_id", "max_failed_connect_ticks", "is_access_to_multiplayer", "tcp_socket_event_bus", "tcp_socket_thread", "current_event2", "tcp_and_udp_is_company", "is_developer_mode", "mouse_pos", "mouse_staying_ticks", "last_mouse_pos", "user_become_afk_ticks", "user_is_afk", "last_world_loading_ticks", "world_loading_timer", "predict_time", "delta_time", "console_config", "console", "FPS", "logger"]
     def __init__(self):
         self.__scenes = {}
         
@@ -138,7 +290,7 @@ class Game:
         
         self.recv_data_size = 2097152
         
-        self.compile_mode = "Apk"
+        self.compile_mode = "Debug"
         
         self.session_id = random.randint(0,1000)
         
@@ -171,8 +323,16 @@ class Game:
         self.predict_time = 60
         
         self.delta_time = 0.0
+
+        self.FPS = 60
+
+        self.console_config = None
+
+        self.console = None
+
+        self.logger = None
         
-    def setup(self, screen, virtual_screen_size, ENVIRONMENT_OS, TILE_SIZE, IP, CHUNK_DISTANCE_FOV, clock, GAME_OBJECTS_RENDER_DISTANCE, COMPILE_MODE):
+    def setup(self, screen, virtual_screen_size, ENVIRONMENT_OS, TILE_SIZE, IP, CHUNK_DISTANCE_FOV, clock, GAME_OBJECTS_RENDER_DISTANCE, COMPILE_MODE, FPS):
         self.screen = screen
         self.virtual_screen_size = virtual_screen_size
         self.ENVIRONMENT_OS = ENVIRONMENT_OS
@@ -183,7 +343,10 @@ class Game:
         self.game_objects_render_distance = GAME_OBJECTS_RENDER_DISTANCE
         self.compile_mode = COMPILE_MODE
         self.screen.fill((255,255,255))
-    
+        self.FPS = FPS
+        self.console = Console(self, self.virtual_screen_size[0], self.FPS)
+        self.logger = Logger(self.console)
+
     def tcp_socket_handler(self):
            while True:
                if not self.tcp_and_udp_is_company:
@@ -227,13 +390,15 @@ class Game:
                """
                if response["event_bus"] != []:
                 self.tcp_socket_event_bus += response["event_bus"]
-               time.sleep(1/60)
+               time.sleep(1/self.FPS)
 
     def tick(self, delta_time, changed_virtual_screen_position):
  
         self.draw_rects = []
         current_scene = self.get_scene()
         current_scene.tick(delta_time, changed_virtual_screen_position)
+
+        self.console.show(self.screen)
         
         if current_scene.is_online_mode:
             self.is_online_mode = True
@@ -1654,7 +1819,8 @@ class Camera(GameObject):
         "_static_position",
         "_focus_zone",
         "_smooth_time",
-        "_fps"
+        "_fps",
+        "targeting_game_object_name"
     )
 
     # Режимы работы камеры
@@ -1864,7 +2030,7 @@ class Chunk:
         "walls", "image", "id", "tiles_ids", "tilemap", "updated_ticks"
     )
 
-    def __init__(self, tilemap: Any, chunk_id: int, image: pygame.Surface, size: int) -> None:
+    def __init__(self, tilemap: Any, chunk_id: int, image, size: int) -> None:
         """
         Инициализация чанка.
 
@@ -2340,7 +2506,7 @@ class TileMap(GameObject):
 
 
 class Input(GameObject):
-    __slots__ = ["color", "raduis", "border_radius", "default_position", "mouse_pressed", "touching_zone_box", "direction", "stick_position", "keys_data_base", "hot_keys_data_base", "modes", "mode", "hot_keys"]
+    __slots__ = ["color", "radius", "border_radius", "default_position", "mouse_pressed", "touching_zone_box", "direction", "stick_position", "keys_data_base", "hot_keys_data_base", "modes", "mode", "hot_keys", "touching_zone_box_rect"]
     def __init__(self, *args):
         super().__init__(*args)
         self.color = None
@@ -2449,7 +2615,7 @@ class KeyBoard(GameObject):
                 self.direction[1] = 1
 
 class Button(GameObject):
-    __slots__ = ["width", "height", "text", "function", "color", "border_color", "border_radius", "change_scene_to_index", "font", "rendered_text", "rendered_text_size", "is_gui"]
+    __slots__ = ["width", "height", "text", "function", "color", "border_color", "border_radius", "change_scene_to_index", "font", "rendered_text", "rendered_text_size", "is_gui", "func_args", "func_name", "button_press_time"]
     def __init__(self, *args):
         super().__init__(*args)
         self.width = 0
@@ -2529,8 +2695,6 @@ class Text(GameObject):
             self.text = str(self.scene.game.is_online_mode)
         self.scene.game.screen.blit(self.rendered_text, [self.position[0], self.position[1]])
         super().tick(*args)
-
-
 
 class RoomLabel(GameObject):
     def __init__(self, *args):
@@ -2692,7 +2856,7 @@ class VisualKeyboard(GameObject):
         self.is_enabled = False
 
 class TextBox(GameObject):
-    __slots__ = ["text", "color", "font", "rendered_text", "rendered_text_size", "size", "mode", "last_time", "fps", "last_ticks"]
+    __slots__ = ["text", "color", "font", "rendered_text", "rendered_text_size", "size", "mode", "last_time", "fps", "last_ticks", "visible_text", "text_color", "border_color", "border_radius", "space_signaling_time", "text_offset_y", "keyboard_is_visible", "max_count_symbols", "keyboard"]
     def __init__(self, *args):
         super().__init__(*args)
         self.text = "Text"

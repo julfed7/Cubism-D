@@ -258,6 +258,7 @@ class GameApplication:
             self.clock,
             self.render_distance,
             Config.COMPILE_MODE,
+            self.fps
         )
 
     # ----------------------------------------------------------------------
@@ -284,6 +285,8 @@ class GameApplication:
                     and len(self.text_box.text) + 1 <= self.text_box.max_count_symbols
                 ):
                     self.text_box.text += event.unicode
+                if event.key == pygame.K_F1:
+                    self.game.console.toggle()
         return True
 
     # ----------------------------------------------------------------------
@@ -317,11 +320,6 @@ class GameApplication:
 
         self.game.tick(self.delta_time, self.changed_virtual_screen_position)
 
-        if self.text_box:
-            events = pygame.event.get()
-            self.text_box.keyboard.update(events)
-            self.text_box.keyboard.draw(self.virtual_screen)
-
         pygame.display.flip()
 
     # ----------------------------------------------------------------------
@@ -344,7 +342,14 @@ class GameApplication:
             events = pygame.event.get()
             running = self._handle_events(events)
 
+            if self.text_box:
+                self.text_box.keyboard.update(events)
+                self.text_box.keyboard.draw(self.virtual_screen)
+
+            self.game.console.update(events)
+
             self._update_screen_transform()
+
             self._draw()
 
             self.ticks += 1
