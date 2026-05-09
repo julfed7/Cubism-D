@@ -121,15 +121,20 @@ class Console:
             "$p": "purple",
             "$w": "white"
         }
-        #self.commands = utils.read_file(utils.path("settings/commands.json"))
+        self.commands = utils.read_file(utils.path("settings/commands.json"))
 
     def print(self, text, is_error=False):
+        i = len(text) // self.max_count_symbols
+        for i in range(i):
+            text = text[:i*self.max_count_symbols] + "\n$g" + text[i*self.max_count_symbols:]
         if is_error is True:
             text = "$r" + str(text) + "$w" + "\n"
         else:
             text = "$g" + text + "$w" + "\n"
 
         self.text += text
+
+        self.column = self.text.count("\n")
 
     def toggle(self):
         self.is_enabled = not self.is_enabled
@@ -172,24 +177,36 @@ class Console:
         if self.is_enabled == True:
             self.is_stopped = False
 
-            self.column = self.text.count("\n")
-
             for event in events:
                 if event.type == pygame.KEYUP:
                     if event.key == pygame.K_RETURN:
-                        """
+                        self.text += self.command_line[2:] + "\n"
+
+
                         parameters = self.command_line[2:].split(" ")
                         command = parameters[0]
                         args = parameters[1:]
 
+                        new_args = []
+
+                        for arg in args:
+                            try:
+                                new_arg = int(arg)
+                                new_arg = str(arg)
+                            except:
+                                new_arg = "'" + arg + "'"
+                            new_args.append(new_arg)
+
                         if command in self.commands["Commands"]:
-                            command_function = self.commands["Commands"][command]
-                            skobka_index1 = command_function.find("(")
-                            skobka_index2 = command_function.find(")")
-                            command_function = command_function[:skobka_index1] + str(*args) + command_function[skobka_index2:]
-                            self.game.logger.print(command_function)
-                        """
-                        self.text += self.command_line[2:] + "\n"
+                            command_function = "\n".join(self.commands["Commands"][command])
+                            skobka_index1 = command_function.rfind("(")
+                            skobka_index2 = command_function.rfind(")")
+                            command_function = command_function[:skobka_index1+1] + str(",".join(new_args)) + command_function[skobka_index2:]
+                            exec(command_function, {"game":self.game})
+                        else:
+                            self.print("Command not found", True)
+
+
                         self.command_line = "> "
                         self.command_line_text = self.font.render(self.command_line, True, "white")
                     elif event.key == pygame.K_UP:
@@ -447,10 +464,10 @@ class Game:
             error_code = self.itinerarium2.connect_ex((self.IP[0], self.IP[1]+1))
             if error_code == 0:
                 is_connected = True
-                print("Подключено успешно!")
+                self.logger.print("Подключено успешно!")
             else:
                 is_connected = False
-                print(f"Ошибка подключения, код: {error_code}")
+                self.logger.print(f"Ошибка подключения, код: {error_code}", True)
             if not is_connected:
                 self.is_access_to_multiplayer = False
             else:

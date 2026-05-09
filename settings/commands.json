@@ -1,8 +1,23 @@
 {
   "Commands": {
-    "Teleport": [
-      "def teleport(position):",
-      " print(position)"
+    "help": [
+      "def main():",
+      " game.logger.print('teleport <entity_id> <x> <y>')",
+      " game.logger.print(' - Teleporing entities to position')",
+      " game.logger.print('entity_list')",
+      " game.logger.print(' - Print names all entities in this scene')",
+      "main()"
+    ],
+    "entity_list": [
+      "def main():",
+      " game.logger.print(str(list(game.scenes.values())[game.current_scene].game_objects))",
+      "main()"
+    ],
+    "teleport": [
+      "def main(entity_name, x, y):",
+      " list(game.scenes.values())[game.current_scene].game_objects[entity_name].position = [x, y]",
+      " game.logger.print(f'Entity {entity_name} has been teleported to ' + str(x) + ' ' + str(y))",
+      "main()"
     ]
   }
 }
