@@ -76,9 +76,9 @@ socket.socket.recvall = recvall
 class Logger:
     def __init__(self, console):
         self.console = console
-    def print(self, text, is_error=False):
-        print(text)
-        self.console.print(text, is_error)
+    def print(self, *text, is_error=False):
+        print("".join(str(text)))
+        self.console.print("".join(str(text)), is_error)
 
 class Console:
     def __init__(self, game, screen_width, FPS):
@@ -553,7 +553,7 @@ class Game:
                     event_data = event[1]
                     #if self.ticks % 60 == 0:
                     if len(str(event_data)) < 100:
-                        print(event_name, event_data)
+                        self.logger.print(event_name, event_data)
                         pass
 
                     if event_name == "Your ID":
@@ -601,7 +601,7 @@ class Game:
                                                 current_scene.remove_game_object(game_object)
                     elif event_name == "Game object moved":
                                 current_scene.game_objects["Z"+str(event_data[0])].position = event_data[1]
-                                print("Z"+str(event_data[0]))
+                                self.logger.print("Z"+str(event_data[0]))
                     elif event_name == "Your rooms":
                                 if "JoinRoomRoomLabel" in current_scene.game_objects:
                                     room_label = current_scene.game_objects["JoinRoomRoomLabel"]
@@ -767,6 +767,8 @@ class Game:
                                 if game_object is not None:
                                     if changed_parameter == "position":
                                         game_object.position = game_event_data[3]
+                    elif event_name == "Your ticks":
+                        self.ticks = event_data[0]
 
 
         except BlockingIOError and OSError:
@@ -992,7 +994,7 @@ class Scene:
                     self.game.current_event += game_object.events
                     game_object.events = []
             except RuntimeError as error:
-                print(error)
+                self.game.logger.print(error)
             for removing_game_object in removing_game_objects:
                 self.remove_game_object(removing_game_object)
             self.ticks += 1
