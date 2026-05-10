@@ -854,6 +854,680 @@ class Game:
         return self.__scenes
 
 
+
+# -------------------------------------------------------------------
+# Менеджер сетевого взаимодействия (UDP + TCP)
+# -------------------------------------------------------------------
+class NetworkManager:
+    def __init__(self, game: 'Game', ip: Tuple[str, int], fps: int):
+        self.game = game
+        self.IP = ip
+        self.FPS = fps
+        self.udp_socket: Optional[socket.socket] = None
+        self.tcp_socket: Optional[socket.socket] = None
+        self.tcp_thread: Optional[threading.Thread] = None
+        self.tcp_events: List[Any] = []
+        self.tcp_and_udp_is_company = False
+        self.last_packet_time = time.time()
+        self.network_checking_time = 60
+        self.recv_data_size = 2097152
+        self.max_failed_connect_ticks = 60
+        self.is_access_to_multiplayer = True
+
+    def initialize_udp(self, session_id: int):
+        """Создаёт UDP-сокет при старте игры."""
+        try:
+            self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            self.udp_socket.setblocking(False)
+            self.send_udp_event(["New client", [session_id]])
+        except ConnectionRefusedError:
+            self.udp_socket = None
+
+    def connect_tcp(self, session_id: int) -> bool:
+        """Подключает TCP-сокет и запускает фоновый поток приёма."""
+        self.tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        error_code = self.tcp_socket.connect_ex((self.IP[0], self.IP[1] + 1))
+        if error_code == 0:
+            self.tcp_thread = threading.Thread(
+                target=self._tcp_handler, args=[session_id], daemon=True
+            )
+            self.tcp_thread.start()
+            return True
+        self.tcp_socket = None
+        return False
+
+    def send_udp_event(self, event: List[Any]):
+        """Отправляет одно событие по UDP."""
+        if self.udp_socket is None:
+            return
+        request = {
+            "event_bus": [event],
+            "ticks": self.game.ticks,
+            "session_id": self.game.session_id
+        }
+        data = json.dumps(request).encode()
+        try:
+            self.udp_socket.sendto(data, tuple(self.IP))
+        except (BrokenPipeError, OSError):
+            pass
+
+    def send_udp_batch(self, events: List[Any]):
+        """Отправляет пакет из нескольких событий по UDP."""
+        if not events or self.udp_socket is None:
+            return
+        request = {
+            "event_bus": events,
+            "ticks": self.game.ticks,
+            "session_id": self.game.session_id
+        }
+        data = json.dumps(request).encode()
+        try:
+            self.udp_socket.sendto(data, self.IP)
+        except (BrokenPipeError, OSError):
+            pass
+
+    def receive_udp(self) -> List[Any]:
+        """Получает UDP-пакет, парсит и возвращает список событий."""
+        if self.udp_socket is None:
+            return []
+        try:
+            data = self.udp_socket.recv(self.recv_data_size)
+            packet = data.decode()
+            start = packet.find("{")
+            end = packet.rfind("}")
+            if start == -1 or end == -1:
+                return []
+            packet = packet[start:end + 1]
+            if not packet:
+                return []
+            response = json.loads(packet)
+            self.last_packet_time = time.time()
+            return response.get("event_bus", [])
+        except (BlockingIOError, OSError, json.JSONDecodeError):
+            return []
+
+    def _tcp_handler(self, session_id: int):
+        """Фоновый поток для постоянного приёма/отправки по TCP."""
+        while True:
+            if not self.tcp_and_udp_is_company:
+                self.tcp_events.append(["My session id", [session_id]])
+
+            if self.tcp_events:
+                try:
+                    request = {
+                        "event_bus": self.tcp_events,
+                        "ticks": self.game.ticks,
+                        "session_id": session_id
+                    }
+                    self.tcp_socket.sendall(json.dumps(request).encode())
+                    self.tcp_events = []
+                except BrokenPipeError:
+                    pass
+
+            try:
+                data = self.tcp_socket.recvall(1024)
+            except ConnectionResetError:
+                data = b""
+            if data:
+                packet = data.decode()
+                try:
+                    response = json.loads(packet)
+                    if response.get("event_bus"):
+                        self.game.tcp_socket_event_bus.extend(response["event_bus"])
+                        self.last_packet_time = time.time()
+                except json.JSONDecodeError:
+                    pass
+            time.sleep(1 / self.FPS)
+
+
+# -------------------------------------------------------------------
+# Менеджер сцен
+# -------------------------------------------------------------------
+class SceneManager:
+    def __init__(self, game: 'Game'):
+        self.game = game
+        self._scenes: dict = {}
+        self.current_index = 0
+
+    @property
+    def scenes(self):
+        return self._scenes
+
+    @property
+    def current_scene(self) -> Optional['Scene']:
+        if not self._scenes:
+            return None
+        return list(self._scenes.values())[self.current_index]
+
+    def add_scene(self, scene):
+        self._scenes[scene.name] = scene
+
+    def remove_scene(self, name: str):
+        self._scenes.pop(name, None)
+
+    def get_scene_by_index(self, index: int = None):
+        if index is None:
+            index = self.current_index
+        return list(self._scenes.values())[index]
+
+    def switch_to(self, index: int):
+        self.current_index = index
+        scene = self.current_scene
+        if scene:
+            scene.ticks = 0
+            for obj in scene.game_objects.values():
+                obj.ticks = 0
+
+
+# -------------------------------------------------------------------
+# Основной класс Game (чистая версия)
+# -------------------------------------------------------------------
+class Game:
+    __slots__ = (
+        'screen', 'virtual_screen_size', 'screen_size', 'changed_virtual_screen_position',
+        'FPS', 'clock', 'delta_time', 'ticks', 'is_online_mode',
+        'logger', 'console', 'is_developer_mode',
+        'draw_rects', 'mouse_pos', 'last_mouse_pos',
+        'mouse_staying_ticks', 'user_is_afk_ticks', 'user_is_afk',
+        'self_player_type_id', 'other_player_type_id', 'map_max_size',
+        'online_render_distance', 'session_id', 'game_object_types',
+        'my_id', 'lagging_ticks', 'predict_time',
+        'last_world_loading_ticks', 'world_loading_timer',
+        'compile_mode', 'scene_mgr', 'network',
+        'current_event',               # буфер событий, заполняемый сценами
+        'tcp_socket_event_bus',        # события, пришедшие по TCP
+        'itinerarium', 'itinerarium2',  # прямые ссылки на сокеты (для совместимости)
+        "ENVIRONMENT_OS",
+        "MAP_MAX_SIZE"
+    )
+
+    def __init__(self):
+        # Базовые настройки
+        self.screen: Optional[pygame.Surface] = None
+        self.virtual_screen_size: Optional[Tuple[int, int]] = None
+        self.screen_size: Optional[Tuple[int, int]] = None
+        self.changed_virtual_screen_position: Optional[List[int]] = None
+        self.FPS = 60
+        self.clock: Optional[pygame.time.Clock] = None
+        self.delta_time = 0.0
+        self.ticks = 0
+        self.is_online_mode = False
+        self.ENVIRONMENT_OS = "Android"
+        self.MAP_MAX_SIZE = [-50000, 50000]
+
+        # UI / Отладка
+        self.console: Optional[Console] = None       # определён в исходном файле
+        self.logger: Optional[Logger] = None         # определён в исходном файле
+        self.is_developer_mode = False
+        self.draw_rects: List[pygame.Rect] = []
+
+        # Мышь и AFK
+        self.mouse_pos = [0, 0]
+        self.last_mouse_pos = [0, 0]
+        self.mouse_staying_ticks = 0
+        self.user_is_afk_ticks = 60
+        self.user_is_afk = False
+
+        # Идентификаторы объектов в сети
+        self.self_player_type_id = 0
+        self.other_player_type_id = 1
+        self.map_max_size = [-50000, 50000, -50000, 50000]
+        self.online_render_distance = 300
+        self.session_id = random.randint(0, 1000)
+        self.game_object_types: dict = {}
+        self.my_id: Optional[int] = None
+        self.lagging_ticks = 2400
+        self.predict_time = 60
+
+        # Загрузка мира
+        self.last_world_loading_ticks = 0
+        self.world_loading_timer = 600
+
+        # Режим компиляции
+        self.compile_mode = "Debug"
+
+        # Менеджеры
+        self.scene_mgr = SceneManager(self)
+        self.network: Optional[NetworkManager] = None
+
+        # Буферы событий (публичные, используются сценами)
+        self.current_event: List[Any] = []
+        self.tcp_socket_event_bus: List[Any] = []
+
+        # Сокеты (оставлены для обратной совместимости, если сцены обращаются напрямую)
+        self.itinerarium: Optional[socket.socket] = None
+        self.itinerarium2: Optional[socket.socket] = None
+
+    # ----------------------------------------------------------------
+    # Инициализация
+    # ----------------------------------------------------------------
+    def setup(self, screen, virtual_screen_size, environment_os, tile_size,
+              ip, chunk_distance_fov, clock, game_objects_render_distance,
+              compile_mode, fps):
+        self.screen = screen
+        self.virtual_screen_size = virtual_screen_size
+        self.screen_size = screen.get_size()
+        self.ENVIRONMENT_OS = environment_os
+        self.FPS = fps
+        self.clock = clock
+        self.compile_mode = compile_mode
+        self.changed_virtual_screen_position = [0, 0]
+
+        # Сетевой менеджер
+        self.network = NetworkManager(self, ip, fps)
+
+        # Консоль и логгер (определены в глобальной области, передаём ссылку на игру)
+        self.console = Console(self, virtual_screen_size[0], fps)
+        self.logger = Logger(self.console)
+
+        self.screen.fill((255, 255, 255))
+
+    # ----------------------------------------------------------------
+    # Сцены (делегированы менеджеру сцен)
+    # ----------------------------------------------------------------
+    @property
+    def scenes(self):
+        return self.scene_mgr.scenes
+
+    def get_scene(self, index=None):
+        return self.scene_mgr.get_scene_by_index(index)
+
+    def add_scene(self, new_scene):
+        self.scene_mgr.add_scene(new_scene)
+
+    def remove_scene(self, scene_name):
+        self.scene_mgr.remove_scene(scene_name)
+
+    def change_current_scene(self, index):
+        self.scene_mgr.switch_to(index)
+    
+    def update_room_label(self, room_label_name):
+    	"""Вызывается кнопками для запроса списка комнат."""
+    	current_scene = self.get_scene()
+    	if current_scene is None:
+    		return
+    	current_scene.room_label = current_scene.game_objects.get(room_label_name)
+    	self.current_event.append(["Get rooms", []])
+        
+
+    # ----------------------------------------------------------------
+    # Сетевые действия (API, вызываемое сценами/кнопками)
+    # ----------------------------------------------------------------
+    def join_room(self, room_name, nickname):
+        if self.network and self.network.is_access_to_multiplayer:
+            self.current_event.append(["Join room", [room_name, nickname]])
+            self.change_current_scene(7)   # индекс онлайн-сцены
+
+    def create_room(self):
+        if self.network and self.network.is_access_to_multiplayer:
+            self.current_event.append(["Create room", [str(random.randint(1, 5))]])
+            self.change_current_scene(0)
+
+    def exit_from_room(self, current_scene=None):
+        if current_scene is None:
+            current_scene = self.get_scene()
+        self.clear_scene(current_scene)
+        self.change_current_scene(0)
+        self.current_event.append(["Leave room", []])
+
+    def clear_scene(self, scene):
+        scene.my_player_id = None
+        scene.player_game_object_name = None
+        scene.current_player_game_object = None
+        removing = [obj for obj in scene.game_objects.values() if obj.is_online_mode]
+        for obj in removing:
+            scene.remove_game_object(obj)
+
+    # ----------------------------------------------------------------
+    # Вспомогательные методы
+    # ----------------------------------------------------------------
+    def get_mouse_pos(self):
+        mouse_pos = list(pygame.mouse.get_pos())
+        if self.screen_size[0] > self.screen_size[1]:
+            virt_w, virt_h = self.virtual_screen_size
+        else:
+            virt_w, virt_h = self.virtual_screen_size[1], self.virtual_screen_size[0]
+        ox = self.changed_virtual_screen_position[0]
+        oy = self.changed_virtual_screen_position[1]
+        mouse_pos[0] = (mouse_pos[0] - ox) / (self.screen_size[0] - 2 * ox) * virt_w
+        mouse_pos[1] = (mouse_pos[1] - oy) / (self.screen_size[1] - 2 * oy) * virt_h
+        return mouse_pos
+
+    # ----------------------------------------------------------------
+    # Основной такт игры
+    # ----------------------------------------------------------------
+    def tick(self, delta_time, changed_virtual_screen_position):
+        self.delta_time = delta_time
+        self.changed_virtual_screen_position = changed_virtual_screen_position
+
+        # 1. Обновляем текущую сцену
+        scene = self.get_scene()
+        self.draw_rects = []
+        scene.tick(delta_time, changed_virtual_screen_position)
+
+        # 2. Консоль
+        self.console.show(self.screen)
+
+        # 3. Онлайн-статус
+        self.is_online_mode = scene.is_online_mode
+
+        # 4. Мышь и AFK
+        self.last_mouse_pos = self.mouse_pos
+        self.mouse_pos = self.get_mouse_pos()
+        self.mouse_staying_ticks = 0 if self.mouse_pos != self.last_mouse_pos else self.mouse_staying_ticks + 1
+
+        player_ctrl = scene.player_controller_game_object
+        ctrl_dir = player_ctrl.direction if player_ctrl else [0, 0]
+        self.user_is_afk = (ctrl_dir == [0, 0] and self.mouse_staying_ticks > self.user_is_afk_ticks)
+
+        # 5. Сетевое взаимодействие
+        if self.network is not None:
+            self._process_network(scene)
+
+        self.ticks += 1
+
+    # ----------------------------------------------------------------
+    # Вся сетевая логика, вынесенная из tick
+    # ----------------------------------------------------------------
+    def _process_network(self, scene):
+        nm = self.network
+
+        # Инициализация UDP, если ещё нет
+        if nm.udp_socket is None:
+            nm.initialize_udp(self.session_id)
+            self.itinerarium = nm.udp_socket
+
+        # Попытка TCP‑подключения на 10-м тике
+        if self.ticks == 10 and nm.tcp_socket is None:
+            if nm.connect_tcp(self.session_id):
+                self.logger.print("Подключено успешно!")
+                self.itinerarium2 = nm.tcp_socket
+            else:
+                self.logger.print("Ошибка подключения к TCP", True)
+                nm.is_access_to_multiplayer = False
+
+        # Keep‑alive / проверка живости
+        if time.time() - nm.last_packet_time > nm.network_checking_time and self.ticks % 60 == 0:
+            nm.send_udp_event(["New client", [self.session_id]])
+
+        if self.ticks % 120 == 0:
+            nm.send_udp_event(["Client alive", [True]])
+
+        # Запрос ID игрока
+        if self.ticks % 60 == 0 and scene.my_player_id is None and scene.is_online_mode:
+            nm.send_udp_event(["Get player ID", []])
+
+        # Запрос игровых объектов (при необходимости)
+        need_objects = (
+            (scene.tilemap is None and self.ticks % 60 == 0)
+            or (self.ticks - self.last_world_loading_ticks > self.world_loading_timer and self.user_is_afk)
+        )
+        if need_objects and scene.is_online_mode and scene.my_player_id is not None:
+            nm.send_udp_event(["Get game objects", []])
+            self.last_world_loading_ticks = self.ticks
+
+        # Запрос изменений
+        if scene.is_online_mode:
+            self.current_event.append(["Get changes", [self.ticks]])
+
+        # Запрос тайлмапа, если ещё не загружен
+        if (scene.is_online_mode and scene.tilemap is not None
+                and self.ticks % 60 == 0 and not scene.tilemap.first_load):
+            self.current_event.append(["Get tilemap", []])
+
+        # Отправка накопленных событий
+        if self.current_event:
+            nm.send_udp_batch(self.current_event)
+            self.current_event = []
+
+        # Приём UDP‑пакетов
+        events = nm.receive_udp()
+
+        # Добавление TCP‑событий
+        if self.tcp_socket_event_bus:
+            events.extend(self.tcp_socket_event_bus)
+            self.tcp_socket_event_bus = []
+
+        # Обработка всех полученных событий
+        for event in events:
+            if len(str(event[1])) < 100:
+                self.logger.print(event[0], event[1])
+            self._process_server_event(event, scene)
+
+    # ----------------------------------------------------------------
+    # Единый метод обработки событий от сервера
+    # ----------------------------------------------------------------
+    def _process_server_event(self, event, scene):
+        """Оригинальная логика разбора событий, полностью перенесена из старого tick."""
+        event_name = event[0]
+        event_data = event[1]
+
+        if event_name == "Your ID":
+            self.my_id = event_data[0]
+
+        elif event_name == "Your player ID":
+            scene.my_player_id = event_data[0]
+
+        elif event_name == "Add game object":
+            if event_data[0] == "Player":
+                game_object = copy.copy(self.game_object_types["PeaShooter"])
+            elif event_data[0] == "Cube":
+                game_object = copy.copy(self.game_object_types["Cube"])
+            game_object.name = "Z" + str(event_data[1])
+            game_object.id = event_data[1]
+            game_object.position = event_data[2]
+            game_object.scene = scene
+            game_object.camera = scene.current_camera
+            game_object.is_online_mode = True
+            game_object.setup()
+            scene.add_game_object(game_object)
+
+        elif event_name == "Your condition of the room":
+            self.ticks = event[2] if len(event) > 2 else self.ticks
+            live_objects = []
+            for obj_data in event_data[0]["Game objects"]:
+                obj_type = obj_data[0]
+                obj_name = "Z" + str(obj_data[1])
+                obj_id = obj_data[1]
+                obj_pos = obj_data[2]
+                live_objects.append(obj_name)
+                if obj_name not in scene.game_objects:
+                    if obj_type == "Player":
+                        go = copy.copy(self.game_object_types["PeaShooter"])
+                        go.name = obj_name
+                        go.id = obj_id
+                        go.position = obj_pos
+                        go.scene = scene
+                        go.camera = scene.current_camera
+                        go.is_online_mode = True
+                        go.setup()
+                        scene.add_game_object(go)
+                else:
+                    scene.game_objects[obj_name].id = obj_id
+                    scene.game_objects[obj_name].position = obj_pos
+            # Удаление лишних
+            for go in list(scene.game_objects.values()):
+                if go.is_online_mode and go.name not in live_objects:
+                    scene.remove_game_object(go)
+
+        elif event_name == "Game object moved":
+            name = "Z" + str(event_data[0])
+            if name in scene.game_objects:
+                scene.game_objects[name].position = event_data[1]
+
+        elif event_name == "Your rooms":
+            if "JoinRoomRoomLabel" in scene.game_objects:
+                scene.game_objects["JoinRoomRoomLabel"].update_room_label(event_data[0])
+
+        elif event_name == "Game object state changed":
+            self._handle_game_object_state_changed(event_data, scene)
+
+        elif event_name == "Add room":
+            if "JoinRoom" in self.scenes:
+                label = self.scenes["JoinRoom"].game_objects.get("JoinRoomRoomLabel")
+                if label:
+                    label.update_room_label(event_data)
+
+        elif event_name == "Your game objects":
+            self._handle_your_game_objects(event_data, scene)
+
+        elif event_name == "Leave room now":
+            self.exit_from_room()
+
+        elif event_name == "Your tilemap":
+            if scene.tilemap is not None:
+                TileMap.config_tilemaps["TileMaps"][scene.tilemap.tilemap_name] = event_data[0]
+                scene.tilemap.first_load = True
+                scene.tilemap.setup()
+
+        elif event_name == "Tcp and Udp detected":
+            if self.network:
+                self.network.tcp_and_udp_is_company = True
+
+        elif event_name == "Your changes":
+            for game_event in event_data[0]:
+                ge_name = game_event[0]
+                ge_data = game_event[1]
+                if ge_name == "Game object state changed":
+                    param = ge_data[0]
+                    obj_id = ge_data[1]
+                    scene_id = "Z" + str(obj_id)
+                    if scene_id in scene.game_objects:
+                        obj = scene.game_objects[scene_id]
+                        if param == "position":
+                            obj.position = ge_data[3]
+
+        elif event_name == "Your ticks":
+            self.ticks = event_data[0]
+
+    def _handle_game_object_state_changed(self, data, scene):
+        type_change = data[0]
+        obj_id = data[1]
+        obj_pos = data[3]
+        obj_type_id = data[4]
+
+        if type_change == 2:
+            # Тип игрока изменился (например, стал зомби)
+            if obj_type_id == self.self_player_type_id:
+                scene.game_objects.pop(scene.current_player_game_object.name, None)
+                scene.current_player_game_object.name = "Z" + str(obj_id)
+                scene.current_player_game_object.id = obj_id
+                scene.game_objects["Z" + str(obj_id)] = scene.current_player_game_object
+            elif "Z" + str(obj_id) not in scene.game_objects:
+                go = copy.copy(self.game_object_types["PeaShooter"])
+                go.name = "Z" + str(obj_id)
+                go.id = obj_id
+                go.position = obj_pos
+                go.scene = scene
+                go.camera = scene.current_camera
+                go.is_online_mode = True
+                go.setup()
+                scene.game_objects[go.name] = go
+        tag = "Z" + str(obj_id)
+        if tag in scene.game_objects:
+            scene.game_objects[tag].set_position(obj_pos)
+
+    def _handle_your_game_objects(self, data, scene):
+        scene.game_objects_data = data
+        if scene.my_player_id is not None:
+            try:
+                my_type = data[1][str(scene.my_player_id)][2]
+            except KeyError:
+                self.change_current_scene(0)
+                return
+        else:
+            my_type = None
+
+        # Создание своего игрока, если ещё нет
+        if (str(scene.my_player_id) in data[1]
+                and "Z" + str(scene.my_player_id) not in scene.game_objects):
+            if my_type == "Player":
+                go = copy.copy(self.game_object_types["PeaShooter"])
+                go.nickname = data[1][str(scene.my_player_id)][3]
+                go.inventory = scene.player_inventory
+                scene.player_inventory.player = go
+                scene.player_hp.player = go
+            go.name = "Z" + str(scene.my_player_id)
+            go.id = scene.my_player_id
+            go.type_id = self.self_player_type_id
+            go.set_position(data[1][str(scene.my_player_id)][0])
+            go.velocity = data[1][str(scene.my_player_id)][1]
+            go.scene = scene
+            go.camera = scene.current_camera
+            go.is_online_mode = True
+            go.mode = "Player"
+            go.setup()
+            scene.add_game_object(go)
+
+        # Остальные объекты
+        for obj_id in data[0]:
+            tag = "Z" + str(obj_id)
+            if tag not in scene.game_objects:
+                obj_type = data[1][str(obj_id)][2]
+                if obj_type == "Player":
+                    go = copy.copy(self.game_object_types["PeaShooter"])
+                    go.mode = "Player"
+                    go.nickname = data[1][str(obj_id)][3]
+                    go.inventory_data = data[1][str(obj_id)][4]
+                    go.hand_item_type = data[1][str(obj_id)][5]
+                    go.hp = data[1][str(obj_id)][6]
+                elif obj_type == "Zombie":
+                    go = copy.copy(self.game_object_types["Zombie"])
+                    go.mode = "Zombie"
+                    go.nickname = data[1][str(obj_id)][3]
+                    go.inventory_data = data[1][str(obj_id)][4]
+                    go.hand_item_type = data[1][str(obj_id)][5]
+                    go.hp = data[1][str(obj_id)][6]
+                elif obj_type == "Item":
+                    go = Item()
+                    items_anim = {0: "Camera", 1: "Pickaxe", 2: "Sword", 3: "Gun", 4: "Coin"}
+                    go.animation_name = items_anim.get(data[1][str(obj_id)][3], "Camera")
+                    go.item_type = data[1][str(obj_id)][3]
+                elif obj_type == "Tilemap":
+                    TileMap.config_tilemaps["TileMaps"].update({f"Z_{obj_id}": []})
+                    go = TileMap()
+                    go.animation_name = "Camera"
+                    go.tilemap_name = f"Z_{obj_id}"
+                    scene.tilemap = go
+                elif obj_type == "Bullet":
+                    go = Bullet()
+                elif obj_type == "Bariga":
+                    go = Bariga()
+                    go.required_item_type = data[1][str(obj_id)][3]
+                    go.required_quantity = data[1][str(obj_id)][4]
+                    go.given_item_type = data[1][str(obj_id)][5]
+                go.name = "Z" + str(obj_id)
+                go.id = obj_id
+                go.set_position(data[1][str(obj_id)][0])
+                go.velocity = data[1][str(obj_id)][1]
+                go.type_id = obj_type
+                go.scene = scene
+                go.camera = scene.current_camera
+                go.is_online_mode = True
+                go.setup()
+                scene.add_game_object(go)
+            else:
+                # Обновление существующего объекта
+                obj = scene.game_objects[tag]
+                obj.set_position(data[1][str(obj_id)][0])
+                obj.velocity = data[1][str(obj_id)][1]
+                obj_type = data[1][str(obj_id)][2]
+                if obj_type == "Player":
+                    obj.inventory_data = data[1][str(obj_id)][4]
+                    obj.hand_item_type = data[1][str(obj_id)][5]
+                    obj.hp = data[1][str(obj_id)][6]
+                elif obj_type == "Tilemap":
+                    if obj.first_load:
+                        for edit in data[1][str(obj_id)][3]:
+                            obj.edit_chunk(edit[0], edit[1])
+                elif obj_type == "Bariga":
+                    obj.required_item_type = data[1][str(obj_id)][3]
+                    obj.required_quantity = data[1][str(obj_id)][4]
+                    obj.given_item_type = data[1][str(obj_id)][5]
+
+
+
+
 class Scene:
     __slots__ = ["type", "name", "game_objects", "entities", "walls", "sprite_group", "game", "current_camera", "current_camera_name", "current_player_game_object", "player_game_object_name", "player_controller_game_object", "player_controller_game_object_name", "is_online_mode", "my_player_id", "tilemap_name", "tilemap", "not_animated", "camera", "game_objects_", "room_label_name", "room_label", "game_objects_data", "player_inventory", "player_inventory_name", "items", "player_hp", "player_hp_name", "ticks"]
     def __init__(self):        
