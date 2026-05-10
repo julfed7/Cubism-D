@@ -361,7 +361,7 @@ class GameApplication:
 
             self.clock.tick(self.fps)
 
-            print(self.clock.get_fps())
+            #print(self.clock.get_fps())
 
             await asyncio.sleep(0)
 

@@ -6,6 +6,12 @@
         "Ticks": [3, 4, 4, 4, 4, 3, 4, 4, 4, 4, 3, 4, 4, 4, 4, 3]
       }
     },
+    "MinecraftSkin": {
+      "Default": {
+        "Frames": 1,
+        "Ticks": [3600]
+      }
+    },
     "Grass": {
       "Default": {
         "Frames": 1,

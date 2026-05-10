@@ -8,6 +8,8 @@ import json
 import utils
 import threading
 import struct
+from modules.get_name_mc_skin import get_namemc_skins
+from modules.get_pygame_skin import get_pygame_skin
 from typing import Any, Optional, List, Tuple
 
 def parse_stacked_json(data):
@@ -247,618 +249,6 @@ class Console:
             self.column = self.text.count("\n")
 
 
-
-class Game:
-    __slots__ = ["__scenes", "current_scene", "screen", "changed_virtual_screen_position", "virtual_screen_size", "screen_size", "ENVIRONMENT_OS", "TILE_SIZE", "IP", "is_online_mode", "current_event", "ticks", "itinerarium", "game_object_types", "my_id", "network_checking_time", "lagging_ticks", "last_packet_time", "chunk_distance_fov", "clock", "game_objects_render_distance", "draw_rects", "SELF_PLAYER_TYPE_ID", "OTHER_PLAYER_TYPE_ID", "MAP_MAX_SIZE", "ONLINE_GAME_OBJECTS_RENDER_DISTANCE", "start_server", "recv_data_size", "compile_mode", "itinerarium2", "session_id", "max_failed_connect_ticks", "is_access_to_multiplayer", "tcp_socket_event_bus", "tcp_socket_thread", "current_event2", "tcp_and_udp_is_company", "is_developer_mode", "mouse_pos", "mouse_staying_ticks", "last_mouse_pos", "user_become_afk_ticks", "user_is_afk", "last_world_loading_ticks", "world_loading_timer", "predict_time", "delta_time", "console_config", "console", "FPS", "logger"]
-    def __init__(self):
-        self.__scenes = {}
-        
-        self.current_scene = 0
-        
-        self.screen  = None
-        
-        self.changed_virtual_screen_position = None
-        
-        self.virtual_screen_size = None
-        
-        self.screen_size = None
-        
-        self.ENVIRONMENT_OS = None
-        
-        self.TILE_SIZE = None
-        
-        self.IP = None
-        
-        self.SELF_PLAYER_TYPE_ID = 0
-        
-        self.OTHER_PLAYER_TYPE_ID = 1
-        
-        self.MAP_MAX_SIZE = [-50000, 50000, -50000, 50000]
-        
-        self.ONLINE_GAME_OBJECTS_RENDER_DISTANCE = 300
-        
-        self.is_online_mode = False
-        
-        self.current_event = []
-        
-        self.current_event2 = []
-        
-        self.ticks = 0
-        
-        self.itinerarium = None
-        
-        self.itinerarium2 = None
-        
-        self.game_object_types = {}
-        
-        self.my_id = None
-        
-        self.network_checking_time = 60
-        
-        self.lagging_ticks = 2400
-        
-        self.last_packet_time = time.time()
-        
-        self.chunk_distance_fov = 1
-        
-        self.clock = None
-        
-        self.game_objects_render_distance = 0
-        
-        self.draw_rects = []
-        
-        self.start_server = None
-        
-        self.recv_data_size = 2097152
-        
-        self.compile_mode = "Debug"
-        
-        self.session_id = random.randint(0,1000)
-        
-        self.max_failed_connect_ticks = 60
-        
-        self.is_access_to_multiplayer = True
-        
-        self.tcp_socket_event_bus = []
-        
-        self.tcp_socket_thread = None
-        
-        self.tcp_and_udp_is_company = False
-        
-        self.is_developer_mode = False
-        
-        self.mouse_pos = [0,0]
-        
-        self.mouse_staying_ticks = 0
-        
-        self.last_mouse_pos = self.mouse_pos
-        
-        self.user_become_afk_ticks = 60
-        
-        self.user_is_afk = False
-        
-        self.last_world_loading_ticks = 0
-        
-        self.world_loading_timer = 600
-        
-        self.predict_time = 60
-        
-        self.delta_time = 0.0
-
-        self.FPS = 60
-
-        self.console_config = None
-
-        self.console = None
-
-        self.logger = None
-        
-    def setup(self, screen, virtual_screen_size, ENVIRONMENT_OS, TILE_SIZE, IP, CHUNK_DISTANCE_FOV, clock, GAME_OBJECTS_RENDER_DISTANCE, COMPILE_MODE, FPS):
-        self.screen = screen
-        self.virtual_screen_size = virtual_screen_size
-        self.ENVIRONMENT_OS = ENVIRONMENT_OS
-        self.TILE_SIZE = TILE_SIZE
-        self.IP = IP
-        self.chunk_distance_fov = CHUNK_DISTANCE_FOV
-        self.clock = clock
-        self.game_objects_render_distance = GAME_OBJECTS_RENDER_DISTANCE
-        self.compile_mode = COMPILE_MODE
-        self.screen.fill((255,255,255))
-        self.FPS = FPS
-        self.console = Console(self, self.virtual_screen_size[0], self.FPS)
-        self.logger = Logger(self.console)
-
-    def tcp_socket_handler(self):
-           while True:
-               if not self.tcp_and_udp_is_company:
-                self.current_event2.append(["My session id", [self.session_id]])
-               if self.current_event2 != [] and self.itinerarium2 is not None:
-                    try:
-                        request = {"event_bus": self.current_event2, "ticks": self.ticks, "session_id": self.session_id}
-                        packet = json.dumps(request)
-                        data_ = packet.encode()
-                        #print(packet)
-                        self.itinerarium2.sendall(data_)
-                        self.current_event2 = []
-                    except BrokenPipeError:
-                        pass
-               try:
-                data = self.itinerarium2.recvall(1024)
-               except ConnectionResetError:
-                data = b""
-               packet = data.decode()
-
-               response = json.loads(packet)
-
-               #print(packet)
-
-               """
-               start_slace = packet.find("{")
-               end_slace = packet.find("}{")
-               if end_slace == -1:
-                end_slace = packet.rfind("}")
-               packet = packet[start_slace:end_slace+1]
-               """
-
-
-               #print(packet)
-               if packet != b"":
-                self.last_packet_time = time.time()
-
-               """
-               small_packets = "".join(small_packets)
-               small_packets = parse_stacked_json(small_packets)
-               """
-               if response["event_bus"] != []:
-                self.tcp_socket_event_bus += response["event_bus"]
-               time.sleep(1/self.FPS)
-
-    def tick(self, delta_time, changed_virtual_screen_position):
- 
-        self.draw_rects = []
-        current_scene = self.get_scene()
-        current_scene.tick(delta_time, changed_virtual_screen_position)
-
-        self.console.show(self.screen)
-        
-        if current_scene.is_online_mode:
-            self.is_online_mode = True
-        else:
-            self.is_online_mode = False
-
-        self.last_mouse_pos = self.mouse_pos
-
-        self.mouse_pos = self.get_mouse_pos()
-        
-        if self.mouse_pos == self.last_mouse_pos:
-            self.mouse_staying_ticks += 1
-        else:
-            self.mouse_staying_ticks = 0
-        
-        
-        if current_scene.player_controller_game_object is None:
-            player_controller = utils.value
-            player_controller.direction = [0,0]
-        else:
-            player_controller = current_scene.player_controller_game_object
-        
-        if player_controller.direction == [0,0] and self.mouse_staying_ticks > self.user_become_afk_ticks:
-            self.user_is_afk = True
-        else:
-            self.user_is_afk = False
-     
-        if self.itinerarium is None:
-            try:
-                    self.itinerarium = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                    self.itinerarium.setblocking(False)
-                    self.current_event.append(["New client", [self.session_id]])
-            except ConnectionRefusedError:
-                        pass
-
-        if time.time() - self.last_packet_time > self.network_checking_time and self.ticks % 60 == 0:
-            #self.change_current_scene(0)
-            self.current_event.append(["New client", [self.session_id]])
-
-
-        if self.ticks % 120 == 0:
-            self.current_event.append(["Client alive", [True]])
-        
-        if self.ticks == 10:
-            self.itinerarium2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            error_code = self.itinerarium2.connect_ex((self.IP[0], self.IP[1]+1))
-            if error_code == 0:
-                is_connected = True
-                self.logger.print("Подключено успешно!")
-            else:
-                is_connected = False
-                self.logger.print(f"Ошибка подключения, код: {error_code}", True)
-            if not is_connected:
-                self.is_access_to_multiplayer = False
-            else:
-                self.tcp_socket_thread = threading.Thread(target=self.tcp_socket_handler, args=[])
-                self.tcp_socket_thread.start()
-
-        if self.ticks % 60 == 0 and current_scene.my_player_id is None and current_scene.is_online_mode is True:
-            self.current_event.append(["Get player ID", []])
-        
-        
-        if ((self.ticks-self.last_world_loading_ticks > self.world_loading_timer and self.user_is_afk) or (current_scene.tilemap is None and self.ticks % 60 == 0)) and current_scene.is_online_mode is True and current_scene.my_player_id is not None:
-            self.current_event.append(["Get game objects", []])
-            self.last_world_loading_ticks = self.ticks
-
-        if current_scene.is_online_mode:
-            self.current_event.append(["Get changes", [self.ticks]])
-            #print(self.ticks, self.current_event)
-        
-        
-        if current_scene.is_online_mode is True and current_scene.tilemap is not None and self.ticks % 60 == 0:
-            if current_scene.tilemap.first_load is False:
-                #raise
-                self.current_event.append(["Get tilemap", []])
-                pass
-        
-        """
-        if current_scene.is_online_mode is True and self.ticks % 60 == 0:
-            
-            self.current_event.append(["Get tilemap", []])
-        """
-        
-        if self.current_event != [] and self.itinerarium is not None:
-              try:
-                request = {"event_bus": self.current_event, "ticks": self.ticks, "session_id": self.session_id}
-                packet = json.dumps(request)
-                data_ = packet.encode()
-                #print(packet)
-                self.itinerarium.sendto(data_, tuple(self.IP))
-                self.current_event = []
-              except BrokenPipeError:
-                pass
-        try:
-            if self.itinerarium is not None:
-                if current_scene.tilemap is not None:
-                    if current_scene.tilemap.first_load is False:
-                        data = self.itinerarium.recv(65536)
-                    else:
-                        data = self.itinerarium.recv(self.recv_data_size)
-                else:
-                    data = self.itinerarium.recv(self.recv_data_size)
-            else:
-                data = b""
-            #print(data, data2)
-            packet = data.decode()
-            start_slace = packet.find("{")
-            end_slace = packet.find("}{")
-            if end_slace == -1:
-                end_slace = packet.rfind("}")
-            packet = packet[start_slace:end_slace+1]
-            if not packet:
-                    packet = "{'event_bus':[], 'ticks':0}"
-
-            response = json.loads(packet)
-
-            if abs(self.ticks - response["ticks"]) > self.lagging_ticks:
-                pass
-                #self.current_event.append(["Get condition of the room", [True]])
-
-            events = response["event_bus"]
-
-            if self.tcp_socket_event_bus != []:
-                events += self.tcp_socket_event_bus
-                self.tcp_socket_event_bus = []
-
-            #print(response["event_bus"])
-
-            if events != []:
-                self.last_packet_time = time.time()
-          
-            for event in events:
-                    #print(event)
-                    event_name = event[0]
-                    event_data = event[1]
-                    #if self.ticks % 60 == 0:
-                    if len(str(event_data)) < 100:
-                        self.logger.print(event_name, event_data)
-                        pass
-
-                    if event_name == "Your ID":
-                        self.my_id = event_data[0]
-                    elif event_name == "Your player ID":
-                        current_scene.my_player_id = event_data[0]
-                    elif event_name == "Add game object":
-                        if event_data[0] == "Player":
-                                game_object = copy.copy(self.game_object_types["PeaShooter"])
-                        elif event_data[0] == "Cube":
-                                game_object = copy.copy(self.game_object_types["Cube"])
-                        game_object.name = "Z"+str(event_data[1])
-                        game_object.id = event_data[1]
-                        game_object.position = event_data[2]
-                        game_object.scene = current_scene
-                        game_object.camera = current_scene.current_camera
-                        game_object.is_online_mode = True
-                        game_object.setup()
-                        current_scene.add_game_object(game_object)
-                    elif event_name == "Your condition of the room":
-                                self.ticks = response["ticks"]
-                                live_game_objects_names = []
-                                for game_object_data in event_data[0]["Game objects"]:
-                                        game_object_type = game_object_data[0]
-                                        game_object_name = "Z"+str(game_object_data[1])
-                                        game_object_id = game_object_data[1]
-                                        game_object_position = game_object_data[2]
-                                        live_game_objects_names.append(game_object_name)
-                                        if game_object_name not in current_scene.game_objects:
-                                            if game_object_type == "Player":
-                                                game_object = copy.copy(self.game_object_types["PeaShooter"])
-                                                game_object.name = game_object_name
-                                                game_object.id = game_object_id
-                                                game_object.position = game_object_position
-                                                game_object.scene = current_scene
-                                                game_object.camera = current_scene.current_camera
-                                                game_object.is_online_mode = True
-                                                game_object.setup()
-                                                current_scene.add_game_object(game_object)
-                                        else:
-                                            current_scene.game_objects[game_object_name].id = game_object_id
-                                            current_scene.game_objects[game_object_name].position = game_object_position
-                                        for game_object in list(current_scene.game_objects.values()):
-                                            if game_object.is_online_mode and game_object.name not in live_game_objects_names:
-                                                current_scene.remove_game_object(game_object)
-                    elif event_name == "Game object moved":
-                                current_scene.game_objects["Z"+str(event_data[0])].position = event_data[1]
-                                self.logger.print("Z"+str(event_data[0]))
-                    elif event_name == "Your rooms":
-                                if "JoinRoomRoomLabel" in current_scene.game_objects:
-                                    room_label = current_scene.game_objects["JoinRoomRoomLabel"]
-                                    room_label.update_room_label(event_data[0])
-                    elif event_name == "Game object state changed":
-                        if event_data[0] == 2:
-                            if event_data[4] == self.SELF_PLAYER_TYPE_ID:
-                                current_scene.game_objects.pop(current_scene.current_player_game_object.name)
-                                current_scene.current_player_game_object.name = "Z"+str(event_data[1])
-                                current_scene.current_player_game_object.id = event_data[1]
-                                current_scene.game_objects.update({current_scene.current_player_game_object.name:current_scene.current_player_game_object})
-                            elif "Z"+str(event_data[1]) not in current_scene.game_objects:
-                                game_object = copy.copy(self.game_object_types["PeaShooter"])
-                                game_object.name = "Z"+str(event_data[1])
-                                game_object.id = event_data[1]
-                                game_object.position = event_data[2]
-                                game_object.scene = current_scene
-                                game_object.camera = current_scene.current_camera
-                                game_object.is_online_mode = True
-                                game_object.setup()
-                                current_scene.game_objects.update({game_object.name:game_object})
-                        game_object_tag = "Z"+str(event_data[1])
-                        if game_object_tag in current_scene.game_objects:
-                            current_scene.game_objects[game_object_tag].set_position(event_data[3])
-                    elif event_name == "Add room":
-                        room_label = self.scenes["JoinRoom"].game_objects["JoinRoomRoomLabel"]
-                        room_label.update_room_label(event_data)
-                    elif event_name == "Your game objects":
-                        data = event_data[0]
-                        current_scene.game_objects_data = data
-                        if current_scene.my_player_id is not None:
-                            try:
-                                type_ = data[1][str(current_scene.my_player_id)][2]
-                            except KeyError:
-                                self.change_current_scene(0)
-                            #type_ = "Player"
-                        else:
-                            type_ = None
-                        if str(current_scene.my_player_id) in data[1] and "Z"+str(current_scene.my_player_id) not in current_scene.game_objects:
-                                if type_ == "Player":
-                                    game_object = copy.copy(self.game_object_types["PeaShooter"])
-                                    game_object.nickname = data[1][str(current_scene.my_player_id)][3]
-                                    game_object.inventory = current_scene.player_inventory
-                                    current_scene.player_inventory.player = game_object
-                                    current_scene.player_hp.player = game_object
-                                game_object.name = "Z"+str(current_scene.my_player_id)
-                                game_object.id = current_scene.my_player_id
-                                game_object.type_id = self.SELF_PLAYER_TYPE_ID
-                                game_object.set_position(data[1][str(current_scene.my_player_id)][0])
-                                game_object.velocity = data[1][str(current_scene.my_player_id)][1]
-                                game_object.scene = current_scene
-                                game_object.camera = current_scene.current_camera
-                                game_object.is_online_mode = True
-                                game_object.mode = "Player"
-                                game_object.setup()
-                                current_scene.add_game_object(game_object)
-                        for game_object_id in data[0]:
-                            if "Z"+str(game_object_id) not in current_scene.game_objects:
-                                type_ = data[1][str(game_object_id)][2]
-                                if type_ == "Player":
-                                    game_object = copy.copy(self.game_object_types["PeaShooter"])
-                                    game_object.mode = "Player"
-                                    game_object.nickname = data[1][str(game_object_id)][3]
-                                    game_object.inventory_data = data[1][str(game_object_id)][4]
-                                    game_object.hand_item_type = data[1][str(game_object_id)][5]
-                                    game_object.hp = data[1][str(game_object_id)][6]
-                                elif type_ == "Zombie":
-                                    game_object = copy.copy(self.game_object_types["Zombie"])
-                                    game_object.mode = "Zombie"
-                                    game_object.nickname = data[1][str(game_object_id)][3]
-                                    game_object.inventory_data = data[1][str(game_object_id)][4]
-                                    game_object.hand_item_type = data[1][str(game_object_id)][5]
-                                    game_object.hp = data[1][str(game_object_id)][6]
-                                elif type_ == "Item":
-                                    game_object = Item()
-                                    items_animations = {
-                                      0: "Camera",
-                                      1: "Pickaxe",
-                                      2: "Sword",
-                                      3: "Gun",
-                                      4: "Coin"
-                                    }
-                                    try:
-                                        game_object.animation_name = items_animations[data[1][str(game_object_id)][3]]
-                                    except IndexError:
-                                        game_object.animation_name = "Camera"
-                                    game_object.item_type = data[1][str(game_object_id)][3]
-                                elif type_ == "Tilemap":
-                                    tilemap_info = []
-                                    TileMap.config_tilemaps["TileMaps"].update({f"Z_{game_object_id}":tilemap_info})
-
-                                    game_object = TileMap()
-                                    game_object.animation_name = "Camera"
-                                    game_object.tilemap_name = f"Z_{game_object_id}"
-                                    current_scene.tilemap = game_object
-                                elif type_ == "Bullet":
-                                    game_object = Bullet()
-                                elif type_ == "Bariga":
-                                    game_object = Bariga()
-                                    game_object.required_item_type = data[1][str(game_object_id)][3]
-                                    game_object.required_quantity = data[1][str(game_object_id)][4]
-                                    game_object.given_item_type = data[1][str(game_object_id)][5]
-                                game_object.name = "Z"+str(game_object_id)
-                                game_object.id = game_object_id
-                                game_object.set_position(data[1][str(game_object_id)][0])
-                                game_object.velocity = data[1][str(game_object_id)][1]
-                                game_object.type_id = data[1][str(game_object_id)][2]
-                                game_object.scene = current_scene
-                                game_object.camera = current_scene.current_camera
-                                game_object.is_online_mode = True
-                                game_object.setup()
-                                current_scene.add_game_object(game_object)
-                            else:
-                                current_scene.game_objects["Z"+str(game_object_id)].set_position(data[1][str(game_object_id)][0])
-                                current_scene.game_objects["Z"+str(game_object_id)].velocity = data[1][str(game_object_id)][1]
-                                type_ = data[1][str(game_object_id)][2]
-                                if type_ == "Player":
-                                    current_scene.game_objects["Z"+str(game_object_id)].inventory_data = data[1][str(game_object_id)][4]
-                                    current_scene.game_objects["Z"+str(game_object_id)].hand_item_type = data[1][str(game_object_id)][5]
-                                    current_scene.game_objects["Z"+str(game_object_id)].hp = data[1][str(game_object_id)][6]
-                                elif type_ == "Tilemap":
-                                    TileMap.config_tilemaps["TileMaps"][current_scene.game_objects["Z"+str(game_object_id)].tilemap_name] = data[1][str(game_object_id)][3]
-                                    if current_scene.game_objects["Z"+str(game_object_id)].first_load is True:
-                                        for edited_chunk in data[1][str(game_object_id)][3]:
-                                            current_scene.game_objects["Z"+str(game_object_id)].edit_chunk(edited_chunk[0], edited_chunk[1])
-                                    for changed_chunk_id in data[1][str(game_object_id)][4][0]:
-                                        for game_object_ID in data[1][str(game_object_id)][4][1][str(changed_chunk_id)]:
-                                            game_object_data = data[1][str(game_object_id)][4][1][str(changed_chunk_id)][game_object_ID]
-                                            if current_scene.tilemap.first_load is True:
-                                                if game_object_ID in current_scene.tilemap.chunks[changed_chunk_id].game_objects:
-                                                    game_object = current_scene.tilemap.chunks[changed_chunk_id].game_objects[game_object_ID]
-                                                    game_object.set_position(game_object_data[0])
-                                elif type_ == "Bariga":
-                                    current_scene.game_objects["Z"+str(game_object_id)].required_item_type = data[1][str(game_object_id)][3]
-                                    current_scene.game_objects["Z"+str(game_object_id)].required_quantity = data[1][str(game_object_id)][4]
-                                    current_scene.game_objects["Z"+str(game_object_id)].given_item_type = data[1][str(game_object_id)][5]
-                                """
-                                if game_object_id != current_scene.my_player_id:
-                                """
-                    elif event_name == "Leave room now":
-                        self.exit_from_room()
-                    elif event_name == "Your tilemap":
-                        if current_scene.tilemap is not None:
-                            TileMap.config_tilemaps["TileMaps"][current_scene.tilemap.tilemap_name] = event_data[0]
-                            current_scene.tilemap.first_load = True
-                            current_scene.tilemap.setup()
-                    elif event_name == "Tcp and Udp detected":
-                        self.tcp_and_udp_is_company = True
-                    elif event_name == "Your changes":
-                        game_events = event_data[0]
-                        for game_event in game_events:
-                            game_event_name = game_event[0]
-                            game_event_data = game_event[1]
-                            if game_event_name == "Game object state changed":
-                                changed_parameter = game_event_data[0]
-                                game_object_id = game_event_data[1]
-                                game_object_type_id = game_event_data[2]
-                                game_object_scene_id = "Z"+str(game_object_id)
-                                if game_object_scene_id in current_scene.game_objects:
-                                    game_object = current_scene.game_objects[game_object_scene_id]
-                                else:
-                                    game_object = None
-                                if game_object is not None:
-                                    if changed_parameter == "position":
-                                        game_object.position = game_event_data[3]
-                    elif event_name == "Your ticks":
-                        self.ticks = event_data[0]
-
-
-        except BlockingIOError and OSError:
-                    pass
-
-        self.ticks += 1
-        
-    def get_scene(self, index=None):
-        if index is None:
-            return list(self.scenes.values())[self.current_scene]
-        else:
-            return list(self.scenes.values())[index]
-        
-    def add_scene(self, new_scene):
-        self.scenes.update({new_scene.name:new_scene})
-        
-    def remove_scene(self, scene_name):
-        self.scenes.pop(scene_name)
-    
-    def get_mouse_pos(self):
-        mouse_pos = list(pygame.mouse.get_pos())
-        if self.screen_size[0] > self.screen_size[1]:
-            virtual_screen_size = self.virtual_screen_size[0]
-        else:
-            virtual_screen = (self.virtual_screen_size[1], self.virtual_screen_size[0])
-        mouse_pos[0] = (mouse_pos[0]-self.changed_virtual_screen_position[0])/(self.screen_size[0]-self.changed_virtual_screen_position[0]*2)*self.virtual_screen_size[0]
-        mouse_pos[1] = (mouse_pos[1]-self.changed_virtual_screen_position[1])/(self.screen_size[1]-self.changed_virtual_screen_position[1]*2)*self.virtual_screen_size[1]
-        return mouse_pos
-        
-    def change_current_scene(self, index):
-        self.current_scene = index
-        current_scene = self.get_scene()
-        current_scene.ticks = 0
-        for game_object in list(current_scene.game_objects.values()):
-            game_object.ticks = 0
-        #self.screen.fill((255,255,255))
-    
-    
-    def join_room(self, room_name, nickname):
-        online_scene = self.get_scene(7)
-        self.clear_scene(online_scene)
-        if self.is_access_to_multiplayer:
-            self.current_event.append(["Join room", [room_name, nickname]])
-            self.change_current_scene(7)
-        
-        
-    def create_room(self):
-        if self.is_access_to_multiplayer:
-            self.current_event.append(["Create room", [str(random.randint(1, 5))]])
-
-            self.change_current_scene(0)
-       
-       
-    def update_room_label(self, room_label_name):
-        current_scene = self.get_scene()
-        current_scene.room_label = current_scene.game_objects[room_label_name]
-        self.current_event.append(["Get rooms", []])
-    
-    def clear_scene(self, scene):
-        scene.my_player_id = None
-        scene.player_game_object_name = None
-        scene.current_player_game_object = None
-        removing_game_objects = []
-        
-        for game_object_name in scene.game_objects:
-            game_object = scene.game_objects[game_object_name]
-            if game_object.is_online_mode:
-                removing_game_objects.append(game_object)
-        for removing_game_object in removing_game_objects:
-            scene.remove_game_object(game_object)
-        
-    def exit_from_room(self, current_scene=None):
-        if current_scene is None:
-            current_scene = self.get_scene()
-
-        self.clear_scene(current_scene)
-         
-        self.change_current_scene(0)
-        self.current_event.append(["Leave room", []])
-        
-    @property
-    def scenes(self):
-        return self.__scenes
-
-
-
 # -------------------------------------------------------------------
 # Менеджер сетевого взаимодействия (UDP + TCP)
 # -------------------------------------------------------------------
@@ -890,7 +280,7 @@ class NetworkManager:
     def connect_tcp(self, session_id: int) -> bool:
         """Подключает TCP-сокет и запускает фоновый поток приёма."""
         self.tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.tcp_socket.setblocking(False)
+        self.tcp_socket.setblocking(True)
         error_code = self.tcp_socket.connect_ex((self.IP[0], self.IP[1] + 1))
         if error_code == 0:
             self.tcp_thread = threading.Thread(
@@ -1381,6 +771,7 @@ class Game:
                     label.update_room_label(event_data)
 
         elif event_name == "Your game objects":
+            #print(event_data)
             self._handle_your_game_objects(event_data, scene)
 
         elif event_name == "Leave room now":
@@ -1440,12 +831,16 @@ class Game:
             scene.game_objects[tag].set_position(obj_pos)
 
     def _handle_your_game_objects(self, data: object, scene: object) -> None:
-        scene.game_objects_data = data
+        event_data = data[0]
+        game_objects_ids = event_data[0]
+        game_objects_data = event_data[1]
+        scene.game_objects_data = event_data
+        #print("EVENT DATA", event_data, "DATA", data)
         if scene.my_player_id is not None:
             try:
-                print(data[0][0][1][str(scene.my_player_id)])
+                #print(data[0][0][1][str(scene.my_player_id)])
                 try:
-                    my_type = data[0][0][1][str(scene.my_player_id)][2]
+                    my_type = game_objects_data[str(scene.my_player_id)][2]
                 except TypeError:
                     return
             except KeyError:
@@ -1455,19 +850,19 @@ class Game:
             my_type = None
 
         # Создание своего игрока, если ещё нет
-        if (str(scene.my_player_id) in data[1]
+        if (str(scene.my_player_id) in game_objects_data
                 and "Z" + str(scene.my_player_id) not in scene.game_objects):
             if my_type == "Player":
-                go = copy.copy(self.game_object_types["PeaShooter"])
-                go.nickname = data[1][str(scene.my_player_id)][3]
+                go = copy.copy(self.game_object_types["MinecraftSkin"])
+                go.nickname = game_objects_data[str(scene.my_player_id)][3]
                 go.inventory = scene.player_inventory
                 scene.player_inventory.player = go
                 scene.player_hp.player = go
             go.name = "Z" + str(scene.my_player_id)
             go.id = scene.my_player_id
-            go.type_id = self.self_player_type_id
-            go.set_position(data[1][str(scene.my_player_id)][0])
-            go.velocity = data[1][str(scene.my_player_id)][1]
+            go.type_id = self.SELF_PLAYER_TYPE_ID
+            go.set_position(game_objects_data[str(scene.my_player_id)][0])
+            go.velocity = game_objects_data[str(scene.my_player_id)][1]
             go.scene = scene
             go.camera = scene.current_camera
             go.is_online_mode = True
@@ -1476,29 +871,41 @@ class Game:
             scene.add_game_object(go)
 
         # Остальные объекты
-        for obj_id in data[0]:
+        for obj_id in game_objects_ids:
             tag = "Z" + str(obj_id)
             if tag not in scene.game_objects:
-                obj_type = data[1][str(obj_id)][2]
+                obj_type = game_objects_data[str(obj_id)][2]
                 if obj_type == "Player":
-                    go = copy.copy(self.game_object_types["PeaShooter"])
+                    go = copy.copy(self.game_object_types["MinecraftSkin"])
                     go.mode = "Player"
-                    go.nickname = data[1][str(obj_id)][3]
-                    go.inventory_data = data[1][str(obj_id)][4]
-                    go.hand_item_type = data[1][str(obj_id)][5]
-                    go.hp = data[1][str(obj_id)][6]
+                    go.nickname = game_objects_data[str(obj_id)][3]
+                    go.inventory_data = game_objects_data[str(obj_id)][4]
+                    go.hand_item_type = game_objects_data[str(obj_id)][5]
+                    go.hp = game_objects_data[str(obj_id)][6]
+                    skin_id = get_namemc_skins(go.nickname)[0]
+                    skin_surface = get_pygame_skin(skin_id)
+                    skin_surface.convert_alpha()
+                    skin_head_surface = skin_surface.subsurface([8, 8, 8, 8])
+                    skin_head_surface = pygame.transform.scale(skin_head_surface, (go.width, go.height))
+                    skin_head_surface.convert_alpha()
+                    skin_head_second_floor = skin_surface.subsurface([48, 8, 8, 8])
+                    skin_head_second_floor = pygame.transform.scale(skin_head_second_floor, (go.width, go.height))
+                    skin_head_second_floor.convert_alpha()
+                    skin_head_second_floor.set_colorkey("black")
+                    skin_head_surface.blit(skin_head_second_floor, [0, 0])
+                    go.animation_frame_images[go.state][go.animation_current_frame] = skin_head_surface
                 elif obj_type == "Zombie":
                     go = copy.copy(self.game_object_types["Zombie"])
                     go.mode = "Zombie"
-                    go.nickname = data[1][str(obj_id)][3]
-                    go.inventory_data = data[1][str(obj_id)][4]
-                    go.hand_item_type = data[1][str(obj_id)][5]
-                    go.hp = data[1][str(obj_id)][6]
+                    go.nickname = game_objects_data[str(obj_id)][3]
+                    go.inventory_data = game_objects_data[str(obj_id)][4]
+                    go.hand_item_type = game_objects_data[str(obj_id)][5]
+                    go.hp = game_objects_data[str(obj_id)][6]
                 elif obj_type == "Item":
                     go = Item()
                     items_anim = {0: "Camera", 1: "Pickaxe", 2: "Sword", 3: "Gun", 4: "Coin"}
-                    go.animation_name = items_anim.get(data[1][str(obj_id)][3], "Camera")
-                    go.item_type = data[1][str(obj_id)][3]
+                    go.animation_name = items_anim.get(game_objects_data[str(obj_id)][3], "Camera")
+                    go.item_type = game_objects_data[str(obj_id)][3]
                 elif obj_type == "Tilemap":
                     TileMap.config_tilemaps["TileMaps"].update({f"Z_{obj_id}": []})
                     go = TileMap()
@@ -1509,13 +916,13 @@ class Game:
                     go = Bullet()
                 elif obj_type == "Bariga":
                     go = Bariga()
-                    go.required_item_type = data[1][str(obj_id)][3]
-                    go.required_quantity = data[1][str(obj_id)][4]
-                    go.given_item_type = data[1][str(obj_id)][5]
+                    go.required_item_type = game_objects_data[str(obj_id)][3]
+                    go.required_quantity = game_objects_data[str(obj_id)][4]
+                    go.given_item_type = game_objects_data[str(obj_id)][5]
                 go.name = "Z" + str(obj_id)
                 go.id = obj_id
-                go.set_position(data[1][str(obj_id)][0])
-                go.velocity = data[1][str(obj_id)][1]
+                go.set_position(game_objects_data[str(obj_id)][0])
+                go.velocity = game_objects_data[str(obj_id)][1]
                 go.type_id = obj_type
                 go.scene = scene
                 go.camera = scene.current_camera
@@ -1525,21 +932,34 @@ class Game:
             else:
                 # Обновление существующего объекта
                 obj = scene.game_objects[tag]
-                obj.set_position(data[1][str(obj_id)][0])
-                obj.velocity = data[1][str(obj_id)][1]
-                obj_type = data[1][str(obj_id)][2]
+                obj.set_position(game_objects_data[str(obj_id)][0])
+                obj.velocity = game_objects_data[str(obj_id)][1]
+                obj_type = game_objects_data[str(obj_id)][2]
                 if obj_type == "Player":
-                    obj.inventory_data = data[1][str(obj_id)][4]
-                    obj.hand_item_type = data[1][str(obj_id)][5]
-                    obj.hp = data[1][str(obj_id)][6]
+                    obj.nickname = game_objects_data[str(obj_id)][3]
+                    obj.inventory_data = game_objects_data[str(obj_id)][4]
+                    obj.hand_item_type = game_objects_data[str(obj_id)][5]
+                    obj.hp = game_objects_data[str(obj_id)][6]
+                    skin_id = get_namemc_skins(obj.nickname)[0]
+                    skin_surface = get_pygame_skin(skin_id)
+                    skin_surface.convert_alpha()
+                    skin_head_surface = skin_surface.subsurface([8, 8, 8, 8])
+                    skin_head_surface = pygame.transform.scale(skin_head_surface, (obj.width, obj.height))
+                    skin_head_surface.convert_alpha()
+                    skin_head_second_floor = skin_surface.subsurface([48, 8, 8, 8])
+                    skin_head_second_floor = pygame.transform.scale(skin_head_second_floor, (obj.width, obj.height))
+                    skin_head_second_floor.convert_alpha()
+                    skin_head_second_floor.set_colorkey("black")
+                    skin_head_surface.blit(skin_head_second_floor, [0, 0])
+                    obj.animation_frame_images[obj.state][obj.animation_current_frame] = skin_head_surface
                 elif obj_type == "Tilemap":
                     if obj.first_load:
-                        for edit in data[1][str(obj_id)][3]:
+                        for edit in game_objects_data[str(obj_id)][3]:
                             obj.edit_chunk(edit[0], edit[1])
                 elif obj_type == "Bariga":
-                    obj.required_item_type = data[1][str(obj_id)][3]
-                    obj.required_quantity = data[1][str(obj_id)][4]
-                    obj.given_item_type = data[1][str(obj_id)][5]
+                    obj.required_item_type = game_objects_data[str(obj_id)][3]
+                    obj.required_quantity = game_objects_data[str(obj_id)][4]
+                    obj.given_item_type = game_objects_data[str(obj_id)][5]
 
 
 
@@ -1678,6 +1098,7 @@ class Scene:
             removing_game_objects = []
             try:
                 for game_object in self.game_objects.values():
+                    #print("GAME OBJECTS DATA", self.game_objects_data)
                     if str(game_object.id) not in self.game_objects_data[1] and game_object.type_id is not None:
                         removing_game_objects.append(game_object)
                     game_object.tick(delta_time, changed_virtual_screen_position, self.game.screen, self.current_camera)
@@ -1767,7 +1188,8 @@ class GameObject(pygame.sprite.Sprite):
                 if self.animation_current_frame + 1 > len(self.animation_frame_images[self.state]) - 1:
                     self.animation_current_frame = 0
                 else:
-                    self.animation_current_frame += 1
+                    pass
+                    #self.animation_current_frame += 1
                 self.last_frame_flip_ticks = self.ticks
 
             self.image = self.animation_frame_images[self.state][self.animation_current_frame]
@@ -1801,6 +1223,8 @@ class GameObject(pygame.sprite.Sprite):
                     frame_image = frame_image.convert_alpha()
                 else:
                     frame_image = frame_image.convert()
+
+                frame_image.set_colorkey("black")
 
                 self.animation_frame_images[animation_state].append(frame_image)
 
@@ -1959,10 +1383,11 @@ class Entity(GameObject):
     def _player_behavior(self):
         """Отрисовка ника, предмета в руке и обработка кликов мыши."""
         # Отрисовка ника
-        nickname_width = len(self.nickname) if self.nickname else 0
+        nickname_width = self.rendered_text.get_width()
+        nickname_height = self.rendered_text.get_height()
         self.scene.game.screen.blit(
             self.rendered_text,
-            [self.rect.x - nickname_width, self.rect.y - nickname_width],
+            [self.rect.x+self.rect.width/2 - nickname_width/2, self.rect.y - nickname_height],
         )
 
         # Отрисовка предмета в руке

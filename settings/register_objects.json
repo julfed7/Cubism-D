@@ -8,6 +8,14 @@
       "Width": 50,
       "Height": 50
     },
+    "MinecraftSkin": {
+      "Type": "Entity",
+      "Animation_name": "MinecraftSkin",
+      "Speed": 200,
+      "Type_id": 1,
+      "Width": 50,
+      "Height": 50
+    },
     "Cube": {
       "Type": "Entity",
       "Animation_name": "Player",

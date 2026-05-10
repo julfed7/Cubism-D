@@ -384,7 +384,7 @@
       "Type": "CommonCamera",
       "Arguments": {
         "Position": [0, 0],
-        "Mode": "Focus_at_game_object",
+        "Mode": "Slow_focus_at_game_object",
         "Target_game_object_name": "Level2Player",
         "Focus_zone": [658, 359, 50, 50]
       }
@@ -438,7 +438,7 @@
       "Type": "CommonCamera",
       "Arguments": {
         "Position": [0, 0],
-        "Mode": "Focus_at_game_object",
+        "Mode": "Slow_focus_at_game_object",
         "Target_game_object_name": "Block"
       }
     },
