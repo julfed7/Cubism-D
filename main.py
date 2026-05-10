@@ -360,6 +360,9 @@ class GameApplication:
             self.game.delta_time = self.delta_time
 
             self.clock.tick(self.fps)
+
+            print(self.clock.get_fps())
+
             await asyncio.sleep(0)
 
         sys.stdout = self.old_stdout

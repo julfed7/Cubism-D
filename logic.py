@@ -127,6 +127,10 @@ class Console:
         i = len(text) // self.max_count_symbols
         for i in range(i):
             text = text[:i*self.max_count_symbols] + "\n$g" + text[i*self.max_count_symbols:]
+
+        if text[:2] == "('" and text[-1] == ")":
+            text = text[2:len(text)-1]
+
         if is_error is True:
             text = "$r" + str(text) + "$w" + "\n"
         else:
@@ -886,6 +890,7 @@ class NetworkManager:
     def connect_tcp(self, session_id: int) -> bool:
         """Подключает TCP-сокет и запускает фоновый поток приёма."""
         self.tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.tcp_socket.setblocking(False)
         error_code = self.tcp_socket.connect_ex((self.IP[0], self.IP[1] + 1))
         if error_code == 0:
             self.tcp_thread = threading.Thread(
@@ -922,7 +927,7 @@ class NetworkManager:
         }
         data = json.dumps(request).encode()
         try:
-            self.udp_socket.sendto(data, self.IP)
+            self.udp_socket.sendto(data, tuple(self.IP))
         except (BrokenPipeError, OSError):
             pass
 
@@ -1038,7 +1043,10 @@ class Game:
         'tcp_socket_event_bus',        # события, пришедшие по TCP
         'itinerarium', 'itinerarium2',  # прямые ссылки на сокеты (для совместимости)
         "ENVIRONMENT_OS",
-        "MAP_MAX_SIZE"
+        "MAP_MAX_SIZE",
+        "chunk_distance_fov",
+        "SELF_PLAYER_TYPE_ID",
+        "current_scene"
     )
 
     def __init__(self):
@@ -1054,6 +1062,8 @@ class Game:
         self.is_online_mode = False
         self.ENVIRONMENT_OS = "Android"
         self.MAP_MAX_SIZE = [-50000, 50000]
+        self.chunk_distance_fov = 3
+        self.current_scene = 0
 
         # UI / Отладка
         self.console: Optional[Console] = None       # определён в исходном файле
@@ -1069,7 +1079,7 @@ class Game:
         self.user_is_afk = False
 
         # Идентификаторы объектов в сети
-        self.self_player_type_id = 0
+        self.SELF_PLAYER_TYPE_ID = 0
         self.other_player_type_id = 1
         self.map_max_size = [-50000, 50000, -50000, 50000]
         self.online_render_distance = 300
@@ -1108,6 +1118,7 @@ class Game:
         self.virtual_screen_size = virtual_screen_size
         self.screen_size = screen.get_size()
         self.ENVIRONMENT_OS = environment_os
+        self.chunk_distance_fov = chunk_distance_fov
         self.FPS = fps
         self.clock = clock
         self.compile_mode = compile_mode
@@ -1140,6 +1151,7 @@ class Game:
 
     def change_current_scene(self, index):
         self.scene_mgr.switch_to(index)
+        self.current_scene = index
     
     def update_room_label(self, room_label_name):
     	"""Вызывается кнопками для запроса списка комнат."""
@@ -1427,11 +1439,15 @@ class Game:
         if tag in scene.game_objects:
             scene.game_objects[tag].set_position(obj_pos)
 
-    def _handle_your_game_objects(self, data, scene):
+    def _handle_your_game_objects(self, data: object, scene: object) -> None:
         scene.game_objects_data = data
         if scene.my_player_id is not None:
             try:
-                my_type = data[1][str(scene.my_player_id)][2]
+                print(data[0][0][1][str(scene.my_player_id)])
+                try:
+                    my_type = data[0][0][1][str(scene.my_player_id)][2]
+                except TypeError:
+                    return
             except KeyError:
                 self.change_current_scene(0)
                 return
